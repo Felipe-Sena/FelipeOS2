@@ -1,0 +1,12 @@
+//TODO:
+Trivia: //(THIS WILL CAUSE SO MANY FUCKING ERRORS!!!)
+    Yakuza Trivia
+    Coding Trivia
+    Source Engine Trivia
+    Swomp Trivia
+    TF2 Lore
+
+Admin Commands
+--Role Deletion Done!
+Count channel detection
+Count number storing in JSON
