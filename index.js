@@ -56,6 +56,7 @@ client.once(Events.ClientReady, c => {
 client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
     console.log(message.content);
+    // This is for the count channel
     if (message.channel.id === countChannel && !message.author.bot) {
         const messageToNumber = parseInt(message.content);
         if (isNaN(messageToNumber)) return;
