@@ -144,13 +144,16 @@ client.on(Events.MessageCreate, async message => {
             break;
         case 'randomvideo':
             // console.log(Math.round(randomNumber * entertainment.videos.length));
-            await message.channel.send(`Here is your video: ${entertainment.videos[Math.round((randomNumber * entertainment.videos.length) - 1)]}`);
+            await message.channel.send(`Here is your video: ${entertainment.videos[Math.floor(randomNumber * entertainment.videos.length)]}`);
+            break;
+        case 'randomimage':
+            await message.channel.send(entertainment.images[Math.floor(randomNumber * entertainment.images.length)]);
             break;
         case 'randomgif':
-            await message.channel.send(entertainment.gifs[Math.round((randomNumber * entertainment.gifs.length) - 1)]);
+            await message.channel.send(entertainment.gifs[Math.floor(randomNumber * entertainment.gifs.length)]);
             break;
         case 'randommusic':
-            await message.channel.send(entertainment.music[Math.round((randomNumber * entertainment.music.length) - 1)]);
+            await message.channel.send(entertainment.music[Math.floor(randomNumber * entertainment.music.length)]);
             break;
         case 'bulkdel':
             // Checks to see if the person has admin
