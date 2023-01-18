@@ -3,7 +3,8 @@ const felipe = '485460915156942849';
 const marissa = '650556167302414356';
 // const target = '836338663867678791';
 const countChannel = '838267998741069864';
-const version = '1.0.1';
+const version = '1.0.5';
+const testing = false;
 const fs = require('fs');
 const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, ActivityType } = require('discord.js');
 const { token } = require ('./config.json');
@@ -47,8 +48,10 @@ function jsonReader(filePath, cb) {
 client.once(Events.ClientReady, c => {
     console.log(`Ready! Logged in as ${c.user.tag}`);
     client.user.setActivity('The Swomp', { type: ActivityType.Watching });
-    const channelToSend = client.channels.cache.find(preChannel => preChannel.id === '691438591829868617');
-    channelToSend.send('https://tenor.com/view/3kilksphillip-hello-run-csgo-gif-20739439');
+    if (!testing) {
+        const channelToSend = client.channels.cache.find(preChannel => preChannel.id === '691438591829868617');
+        channelToSend.send('https://tenor.com/view/3kilksphillip-hello-run-csgo-gif-20739439');
+    }
 });
 
 // This here will read the chat, I've worked on this for so many hours I'd like to process.exit() myself
@@ -98,7 +101,7 @@ client.on(Events.MessageCreate, async message => {
     // Funny chat responses idk
     if (susWords.words.some(element => message.content.toLowerCase().includes(element))) {
         console.log('WORKING');
-        message.channel.send(susResponses.responses[Math.floor(randomNumber * susResponses.responses.length)]);
+        message.reply(susResponses.responses[Math.floor(randomNumber * susResponses.responses.length)]);
     }
     /* Easily abusable, fix fix fix!
     if (message.author.id === target) {
@@ -145,7 +148,7 @@ client.on(Events.MessageCreate, async message => {
             break;
         case 'randomvideo':
             // console.log(Math.round(randomNumber * entertainment.videos.length));
-            await message.channel.send(`Here is your video: ${entertainment.videos[Math.floor(randomNumber * entertainment.videos.length)]}`);
+            await message.reply(`Here is your video: ${entertainment.videos[Math.floor(randomNumber * entertainment.videos.length)]}`);
             break;
         case 'randomimage':
             await message.channel.send(entertainment.images[Math.floor(randomNumber * entertainment.images.length)]);
@@ -161,29 +164,29 @@ client.on(Events.MessageCreate, async message => {
             // TODO: Maybe make it a role specific command? <- sure?
             if (!message.member.permissionsIn(message.channel).has('Administrator')) return;
             if (!containsArg || !Number.isInteger(defaultArg)) {
-                await message.channel.send('Please enter a number for the amount of messages to delete!');
+                await message.reply('Please enter a number for the amount of messages to delete!');
                 console.log('noarg');
                 return;
             }
 
             if (defaultArg > 100) {
-                await message.channel.send('Cannot delete more than 100 messages at a time, the bot will delete 100 messages now and you can delete the remaining ones with another command!');
+                await message.reply('Cannot delete more than 100 messages at a time, the bot will delete 100 messages now and you can delete the remaining ones with another command!');
                 defaultArg = 100;
             }
 
             try {
                 await message.channel.bulkDelete(defaultArg);
             } catch (error) {
-                await message.channel.send('It seems that you did not use a number as the argument to this command, please try again.');
+                await message.reply('It seems that you did not use a number as the argument to this command, please try again.');
             }
             break;
         case 'rolecreate':
             if (!message.member.permissionsIn(message.channel).has('Administrator')) {
-                message.channel.send(`You don't have the permission to use this command <@${message.member.id}>`);
+                message.reply('You dont have the permission to use this command');
                 return;
             }
             if (!containsArg && !messageArray[2]) {
-                await message.channel.send(`Please input a name and a scope for the new role <@${message.author.id}>`);
+                await message.reply('Please input a name and a scope for the new role');
                 return;
             }
             // message.guild accesses the specific server the command was ran in
@@ -197,22 +200,22 @@ client.on(Events.MessageCreate, async message => {
                     await message.channel.send(`New role "${messageArray[1]}" with default scope created by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
                     break;
                 default:
-                    await message.channel.send('Format: -rolecreate {name} {admin/normal}');
+                    await message.reply('Format: -rolecreate {name} {admin/normal}');
             }
             break;
         case 'roledelete':
             if (!message.member.permissionsIn(message.channel).has('Administrator')) {
-                message.channel.send(`You don't have the permission to use this command <@${message.member.id}>`);
+                await message.reply('You dont have the permission to use this command');
                 return;
             }
             if (!containsArg) {
-                await message.channel.send(`Please input the role name <@${message.author.id}>`);
+                await message.reply('Please input the role name');
                 return;
             }
             // Should let the user know if an error happens but that can be fixed later
             try {
                 const chosenRole = message.guild.roles.cache.find(role => role.name === messageArray[1]);
-                message.channel.send(`Role "${chosenRole.name}" was deleted by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
+                await message.channel.send(`Role "${chosenRole.name}" was deleted by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
                 chosenRole.delete();
             } catch (err) {
                 console.log(err);
@@ -220,10 +223,10 @@ client.on(Events.MessageCreate, async message => {
             break;
         case 'ppsize':
             // TODO: Make randomness better, right now it's like the average r/teenagers post (GUYS MY DICK IS 200 INCHES LONG!!!)
-            message.channel.send(`<@${message.member.id}>'s dick is ${(randomNumber * 14).toFixed(2)} inches long!\n 8${'='.repeat(randomNumber * 14)}D`);
+            await message.channel.send(`<@${message.member.id}>'s dick is ${(randomNumber * 14).toFixed(2)} inches long!\n 8${'='.repeat(randomNumber * 14)}D`);
             break;
         default:
-            message.channel.send('Unknown command... maybe do -help?');
+            await message.reply('Unknown command... maybe do -help?');
     }
     console.log(message.content);
 });
