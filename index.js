@@ -132,7 +132,7 @@ client.on(Events.MessageCreate, async message => {
     switch (command) {
         case 'emergencyswitch':
             console.log('precom');
-            if (message.author.id === config.felipeID || message.author.id === config.marissaID) {
+            if (message.author.id === config.OwnerID || message.author.id === config.HelperID) {
                 console.log('postcom');
                 await message.channel.send('Quitting...');
                 await message.channel.send('https://tenor.com/view/bye-ironic-meme-raffiboss22-ifunny-ironic-ifunny-gif-gif-19834066');
