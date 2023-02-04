@@ -1,13 +1,10 @@
 // Require the necessary discord.js classes
-const felipe = '485460915156942849';
-const marissa = '650556167302414356';
 // const target = '836338663867678791';
-const countChannel = '838267998741069864';
 const version = '1.0.5';
-const testing = false;
+const testing = true;
 const fs = require('fs');
 const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, ActivityType } = require('discord.js');
-const { token } = require ('./config.json');
+const config = require ('./config.json');
 // ChannelType
 // const list = require('./spclst.json'); <- wtf is this bullshit
 // const countData = require('./count.json');
@@ -56,11 +53,16 @@ client.once(Events.ClientReady, c => {
 
 // This here will read the chat, I've worked on this for so many hours I'd like to process.exit() myself
 
+client.on('guildMemberAdd', member => {
+    const role = member.guild.roles.cache.find(r => r.id === config.townspersonRole);
+    member.roles.add(role).catch(console.error);
+});
+
 client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
     console.log(message.content);
     // This is for the count channel
-    if (message.channel.id === countChannel && !message.author.bot) {
+    if (message.channel.id === config.countChannel && !message.author.bot) {
         const messageToNumber = parseInt(message.content);
         if (isNaN(messageToNumber)) return;
         jsonReader('./count.json', (err, countData) => {
@@ -130,7 +132,7 @@ client.on(Events.MessageCreate, async message => {
     switch (command) {
         case 'emergencyswitch':
             console.log('precom');
-            if (message.author.id === felipe || message.author.id === marissa) {
+            if (message.author.id === config.felipeID || message.author.id === config.marissaID) {
                 console.log('postcom');
                 await message.channel.send('Quitting...');
                 await message.channel.send('https://tenor.com/view/bye-ironic-meme-raffiboss22-ifunny-ironic-ifunny-gif-gif-19834066');
@@ -232,4 +234,4 @@ client.on(Events.MessageCreate, async message => {
 });
 
 // Log in to Discord, this should ALWAYS be the last line of code!
-client.login(token);
+client.login(config.token);
