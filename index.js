@@ -1,7 +1,7 @@
 // Require the necessary discord.js classes
 // const target = '836338663867678791';
 const version = '1.0.5';
-const testing = true;
+const testing = false;
 const fs = require('fs');
 const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, ActivityType } = require('discord.js');
 const config = require ('./config.json');
