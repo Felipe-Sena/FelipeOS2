@@ -54,8 +54,12 @@ client.once(Events.ClientReady, c => {
 // This here will read the chat, I've worked on this for so many hours I'd like to process.exit() myself
 
 client.on('guildMemberAdd', member => {
-    const role = member.guild.roles.cache.find(r => r.id === config.townspersonRole);
-    member.roles.add(role).catch(console.error);
+    const townsRole = member.guild.roles.cache.find(r => r.id === config.townspersonRole);
+    const countRol = member.guild.roles.cache.find(r => r.id === config.countRole);
+    const announcements = member.guild.channels.cache.find(c => c.id === config.announcementsChannel);
+    member.roles.add(townsRole).catch(console.error);
+    member.roles.add(countRol).catch(console.error);
+    announcements.send(`Hello <@${member.id}>! Welcome to the Swomp, make sure to read the rules in <#${config.rulesChannel}>`);
 });
 
 client.on(Events.MessageCreate, async message => {
