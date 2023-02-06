@@ -1,20 +1,27 @@
 // Require the necessary discord.js classes
-// const target = '836338663867678791';
 const version = '1.0.5';
-const testing = false;
+let testing = false;
 const fs = require('fs');
 const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, ActivityType } = require('discord.js');
 const config = require ('./config.json');
-// ChannelType
-// const list = require('./spclst.json'); <- wtf is this bullshit
-// const countData = require('./count.json');
+const { argv } = require('node:process');
 const susWords = require('./triggerWords.json');
 const susResponses = require('./triggerResponses.json');
 const entertainment = require('./randomEntertainment.json');
 const info = require('./info.json');
 const prefix = '-';
-// let previousAuthorID = '0';
+// Launch Arguments
 
+// print process.argv
+argv.forEach((val) => {
+  // console.log(`${index}: ${val}`);
+  // console.log(val);
+  const arg = [val];
+  console.log(arg);
+  if (arg.includes('-testing')) {
+    testing = true;
+  }
+});
 // Initialize a new client instance
 const client = new Client({ intents: [
     GatewayIntentBits.Guilds,
@@ -46,8 +53,7 @@ client.once(Events.ClientReady, c => {
     console.log(`Ready! Logged in as ${c.user.tag}`);
     client.user.setActivity('The Swomp', { type: ActivityType.Watching });
     if (!testing) {
-        const channelToSend = client.channels.cache.find(preChannel => preChannel.id === '691438591829868617');
-        channelToSend.send('https://tenor.com/view/3kilksphillip-hello-run-csgo-gif-20739439');
+        console.log('GIF SENT');
     }
 });
 
