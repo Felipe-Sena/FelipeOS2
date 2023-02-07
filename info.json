@@ -1,5 +1,6 @@
 {
     "credits": "Felipe Sena Costa: Pretty much everything\nProudly uses Discord.js!",
-    "commands": "-versionnumber = Returns the current version\n-credits = Shows creddits and attributions\n-randomvideo = Shows a random youtube video\n-randomgif = Shows a random gif\n-randommusic = Shows a random song\n-bulkdel {int} = ADMIN ONLY! Deletes a set number of messages\n-rolecreate {name} {admin/normal} = ADMIN ONLY! Creates a new role\n-roledelete {name} = ADMIN ONLY! Deletes an existing role\n-ppsize = Dick size command (real)",
-    "update": "Added join roles and annonimized IDs"
+    "commands": "-versionnumber = Returns the current version\n-credits = Shows creddits and attributions\n-latestupdate = Shows patch notes\n-randomvideo = Shows a random youtube video\n-randomgif = Shows a random gif\n-randommusic = Shows a random song\n-bulkdel {int} = ADMIN ONLY! Deletes a set number of messages\n-rolecreate {name} {admin/normal} = ADMIN ONLY! Creates a new role\n-roledelete {name} = ADMIN ONLY! Deletes an existing role\n-ppsize = Dick size command (real)",
+    "update": "Added launch arguments, bugfixes, chalk integration and logging organization",
+    "version": "1.10.1"
 }
