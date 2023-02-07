@@ -1,8 +1,15 @@
-// Require the necessary discord.js classes
-const version = '1.0.5';
+// Variables and classes
 let testing = false;
 let counting = true;
+let countingTest = false;
+let countingPath = 'count';
+let verbose = false;
 const fs = require('fs');
+const chalk = require('chalk');
+const error = chalk.redBright;
+const sucess = chalk.greenBright;
+const warn = chalk.yellowBright;
+const log = console.log;
 const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, ActivityType } = require('discord.js');
 const readline = require('readline').createInterface({ input: process.stdin, output: process.stdout });
 const config = require ('./config.json');
@@ -17,18 +24,27 @@ const channelOverride = 'nil';
 let args;
 // Launch Arguments
 
-// print process.argv
 argv.forEach((val) => {
   // console.log(`${index}: ${val}`);
   // console.log(val);
   args = [val];
-  console.log(args);
+  // log(args);
 
+  if (args.includes('-h' || '-help')) {
+    log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -testcount -verbose')));
+    process.exit();
+  }
   if (args.includes('-testing')) {
     testing = true;
   }
   if (args.includes('-nocount')) {
     counting = false;
+  }
+  if (args.includes('-testcount') && !args.includes('-nocount')) {
+    countingTest = true;
+  }
+  if (args.includes('-verbose')) {
+    verbose = true;
   }
 });
 // Initialize a new client instance
@@ -57,43 +73,51 @@ function jsonReader(filePath, cb) {
 }
 
 function userInput() {
-    readline.question('> ', uinput => {
+    readline.question('', uinput => {
         const messageArr = uinput.split(/ + /);
         switch (uinput) {
-            case 'exit':
-                console.log('QUITTING');
-                process.exit;
-                break;
+            case 'quit':
+                log(error('QUITTING'));
+                process.exit();
+            // eslint-disable-next-line no-fallthrough
             case 'disableCount':
                 if (counting) {
                     counting = false;
+                    log(sucess('Counting is now disabled'));
                     break;
                 }
-                console.log('The bot is currently not counting');
+                log(warn('The bot is currently not counting'));
                 break;
             case 'enableCount':
                 if (!counting) {
                     counting = true;
+                    log(sucess('Counting is now enabled'));
                     break;
                 }
-                console.log('The bot is already counting');
+                log(warn('The bot is already counting'));
         }
         readline.close;
+        userInput();
     });
 }
 // Use a set interval like setInterval(userInput, 500);
 // Run this only once when the client is ready
 // Arrow function using 'c' as a parameter for client so we don't have conflicting vars
 client.once(Events.ClientReady, c => {
-    console.log(`Ready! Logged in as ${c.user.tag}`);
+    log(sucess(`Ready! Logged in as ${c.user.tag}`));
     client.user.setActivity('The Swomp', { type: ActivityType.Watching });
     if (!testing) {
-        console.log('GIF SENT');
+        const channelToSend = client.channels.cache.find(preChannel => preChannel.id === '691438591829868617');
+        if (channelToSend) {
+            channelToSend.send('https://tenor.com/view/3kilksphillip-hello-run-csgo-gif-20739439');
+        } else {
+            log(warn('Swomp general channel not found, are you running this on another server or was the channel removed?'));
+        }
     }
+    userInput();
 });
 
 // This here will read the chat, I've worked on this for so many hours I'd like to process.exit() myself
-
 client.on(Events.GuildMemberAdd, member => {
     const townsRole = member.guild.roles.cache.find(r => r.id === config.townspersonRole);
     const countRol = member.guild.roles.cache.find(r => r.id === config.countRole);
@@ -105,15 +129,21 @@ client.on(Events.GuildMemberAdd, member => {
 
 client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
-    console.log(message.content);
+    log(chalk.blue(chalk.bold(message.author.username) + ' ' + chalk.whiteBright(message.content)));
+    if (verbose) log(`Random Number = ${randomNumber}`);
     // This is for the count channel
     if (counting) {
+        if (countingTest) {
+          config.countChannel = config.countChannelDev;
+          countingPath = 'devCount';
+        }
         if (message.channel.id === config.countChannel && !message.author.bot) {
             const messageToNumber = parseInt(message.content);
+            if (verbose) log(messageToNumber);
             if (isNaN(messageToNumber)) return;
-            jsonReader('./count.json', (err, countData) => {
+            jsonReader(`./${countingPath}.json`, (err, countData) => {
                 if (err) {
-                    console.log('Error reading file', err);
+                    log(error('Error reading file', err));
                 }
                 if (messageToNumber === countData.next && message.author.id != countData.prevID) {
                     countData.prevID = message.author.id;
@@ -124,32 +154,31 @@ client.on(Events.MessageCreate, async message => {
                     }
                     fs.writeFile('./count.json', JSON.stringify(countData), err => {
                         if (err) {
-                            console.log('Error writing file:', err);
+                            log(error('Error writing file:', err));
                             message.channel.send('Error writing to disk!');
                         }
                     });
                     message.react('✅');
+                    if (verbose) log(countData);
                 } else {
-                    console.log('uh oh!');
                     countData.prevID = message.author.id;
                     countData.current = 0;
                     countData.next = 1;
                     fs.writeFile('./count.json', JSON.stringify(countData), err => {
                         if (err) {
-                        console.log('Error writing file:', err);
+                        log(error('Error writing file:', err));
                         message.channel.send('Error writing to disk!');
                         }
                     });
                     message.react('❌');
+                    if (verbose) log(countData);
                     message.channel.send(`<@${message.author.id}> ruined it! Laugh at this blunder!\nHighscore:${countData.highscore}`);
                 }
             });
         }
-        // console.log(messageToNumber);
     }
     // Funny chat responses idk
     if (susWords.words.some(element => message.content.toLowerCase().includes(element))) {
-        console.log('WORKING');
         message.reply(susResponses.responses[Math.floor(randomNumber * susResponses.responses.length)]);
     }
     /* Easily abusable, fix fix fix!
@@ -158,7 +187,6 @@ client.on(Events.MessageCreate, async message => {
     }
     */
     if (!message.content.startsWith(prefix) || message.author.bot) return;
-    console.clear();
     // Command Handling
     const preProcess = message.content.slice(prefix.length).split(/ + /);
     const preProceess0 = preProcess.shift().toLowerCase();
@@ -167,34 +195,37 @@ client.on(Events.MessageCreate, async message => {
     let preProcessedArg = '';
     let defaultArg = 0;
     const date = new Date(message.createdTimestamp);
-    console.log(messageArray);
-    // console.log(`preProcess = ${preProcess}\npreProcess0 = ${preProceess0}\nmessageArray = ${messageArray}\ncommand = ${command}\nmessageArray Lenght = ${messageArray.length}`);
+    // if (verbose) console.log(chalk.blueBright(messageArray));
+    // if (verbose) console.log(`preProcess = ${preProcess}\npreProcess0 = ${preProceess0}\nmessageArray = ${messageArray}\ncommand = ${command}\nmessageArray Lenght = ${messageArray.length}`);
     let containsArg = false;
     if (messageArray.length !== 1) {
         containsArg = true;
         preProcessedArg = messageArray[1];
         defaultArg = parseInt(preProcessedArg);
-        console.log(containsArg);
+        if (verbose) log(chalk.blueBright(containsArg));
     }
     switch (command) {
         case 'emergencyswitch':
             if (message.author.id === config.OwnerID || message.author.id === config.HelperID) {
                 await message.channel.send('Quitting...');
                 await message.channel.send('https://tenor.com/view/bye-ironic-meme-raffiboss22-ifunny-ironic-ifunny-gif-gif-19834066');
+                log(warn('WARNING: ') + 'bot shutdown initiated by ' + warn(message.author.username));
                 process.exit();
             }
             break;
         case 'versionnumber':
-            await message.channel.send(`Bot is currently running version ${version}`);
+            await message.channel.send(`Bot is currently running version ${info.version}`);
             break;
         case 'credits':
             await message.channel.send(info.credits);
+            break;
+        case 'latestupdate':
+            await message.channel.send(info.update);
             break;
         case 'help':
             await message.channel.send(codeBlock(info.commands));
             break;
         case 'randomvideo':
-            // console.log(Math.round(randomNumber * entertainment.videos.length));
             await message.reply(`Here is your video: ${entertainment.videos[Math.floor(randomNumber * entertainment.videos.length)]}`);
             break;
         case 'randomimage':
@@ -212,19 +243,25 @@ client.on(Events.MessageCreate, async message => {
             if (!message.member.permissionsIn(message.channel).has('Administrator')) return;
             if (!containsArg || !Number.isInteger(defaultArg)) {
                 await message.reply('Please enter a number for the amount of messages to delete!');
-                console.log('noarg');
+                if (verbose) log(error('noarg'));
                 return;
             }
 
             if (defaultArg > 100) {
                 await message.reply('Cannot delete more than 100 messages at a time, the bot will delete 100 messages now and you can delete the remaining ones with another command!');
                 defaultArg = 100;
+                if (verbose) log(error('arg int exceed 100'));
             }
 
             try {
                 await message.channel.bulkDelete(defaultArg);
-            } catch (error) {
+            } catch (err) {
+                if (err.toString().includes('DiscordAPIError[50034]')) {
+                    await message.reply('You can only bulk delete messages that are under 14 days old');
+                    break;
+                }
                 await message.reply('It seems that you did not use a number as the argument to this command, please try again.');
+                log(error(err));
             }
             break;
         case 'rolecreate':
@@ -265,7 +302,7 @@ client.on(Events.MessageCreate, async message => {
                 await message.channel.send(`Role "${chosenRole.name}" was deleted by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
                 chosenRole.delete();
             } catch (err) {
-                console.log(err);
+                log(error(err));
             }
             break;
         case 'ppsize':
@@ -275,9 +312,6 @@ client.on(Events.MessageCreate, async message => {
         default:
             await message.reply('Unknown command... maybe do -help?');
     }
-    console.log(message.content);
 });
-// Jitters, but it's fine for now
-setInterval(userInput, 100);
 // Log in to Discord, this should ALWAYS be the last line of code!
 client.login(config.token);
