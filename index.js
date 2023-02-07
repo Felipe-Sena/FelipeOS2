@@ -1,8 +1,10 @@
 // Require the necessary discord.js classes
 const version = '1.0.5';
 let testing = false;
+let counting = true;
 const fs = require('fs');
 const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, ActivityType } = require('discord.js');
+const readline = require('readline').createInterface({ input: process.stdin, output: process.stdout });
 const config = require ('./config.json');
 const { argv } = require('node:process');
 const susWords = require('./triggerWords.json');
@@ -10,16 +12,23 @@ const susResponses = require('./triggerResponses.json');
 const entertainment = require('./randomEntertainment.json');
 const info = require('./info.json');
 const prefix = '-';
+const messageOverride = 'nil';
+const channelOverride = 'nil';
+let args;
 // Launch Arguments
 
 // print process.argv
 argv.forEach((val) => {
   // console.log(`${index}: ${val}`);
   // console.log(val);
-  const arg = [val];
-  console.log(arg);
-  if (arg.includes('-testing')) {
+  args = [val];
+  console.log(args);
+
+  if (args.includes('-testing')) {
     testing = true;
+  }
+  if (args.includes('-nocount')) {
+    counting = false;
   }
 });
 // Initialize a new client instance
@@ -47,6 +56,32 @@ function jsonReader(filePath, cb) {
     });
 }
 
+function userInput() {
+    readline.question('> ', uinput => {
+        const messageArr = uinput.split(/ + /);
+        switch (uinput) {
+            case 'exit':
+                console.log('QUITTING');
+                process.exit;
+                break;
+            case 'disableCount':
+                if (counting) {
+                    counting = false;
+                    break;
+                }
+                console.log('The bot is currently not counting');
+                break;
+            case 'enableCount':
+                if (!counting) {
+                    counting = true;
+                    break;
+                }
+                console.log('The bot is already counting');
+        }
+        readline.close;
+    });
+}
+// Use a set interval like setInterval(userInput, 500);
 // Run this only once when the client is ready
 // Arrow function using 'c' as a parameter for client so we don't have conflicting vars
 client.once(Events.ClientReady, c => {
@@ -59,7 +94,7 @@ client.once(Events.ClientReady, c => {
 
 // This here will read the chat, I've worked on this for so many hours I'd like to process.exit() myself
 
-client.on('guildMemberAdd', member => {
+client.on(Events.GuildMemberAdd, member => {
     const townsRole = member.guild.roles.cache.find(r => r.id === config.townspersonRole);
     const countRol = member.guild.roles.cache.find(r => r.id === config.countRole);
     const announcements = member.guild.channels.cache.find(c => c.id === config.announcementsChannel);
@@ -72,42 +107,44 @@ client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
     console.log(message.content);
     // This is for the count channel
-    if (message.channel.id === config.countChannel && !message.author.bot) {
-        const messageToNumber = parseInt(message.content);
-        if (isNaN(messageToNumber)) return;
-        jsonReader('./count.json', (err, countData) => {
-            if (err) {
-                console.log('Error reading file', err);
-            }
-            if (messageToNumber === countData.next && message.author.id != countData.prevID) {
-                countData.prevID = message.author.id;
-                countData.current = messageToNumber;
-                countData.next++;
-                if (countData.current > countData.highscore) {
-                    countData.highscore = countData.current;
+    if (counting) {
+        if (message.channel.id === config.countChannel && !message.author.bot) {
+            const messageToNumber = parseInt(message.content);
+            if (isNaN(messageToNumber)) return;
+            jsonReader('./count.json', (err, countData) => {
+                if (err) {
+                    console.log('Error reading file', err);
                 }
-                fs.writeFile('./count.json', JSON.stringify(countData), err => {
-                    if (err) {
+                if (messageToNumber === countData.next && message.author.id != countData.prevID) {
+                    countData.prevID = message.author.id;
+                    countData.current = messageToNumber;
+                    countData.next++;
+                    if (countData.current > countData.highscore) {
+                        countData.highscore = countData.current;
+                    }
+                    fs.writeFile('./count.json', JSON.stringify(countData), err => {
+                        if (err) {
+                            console.log('Error writing file:', err);
+                            message.channel.send('Error writing to disk!');
+                        }
+                    });
+                    message.react('✅');
+                } else {
+                    console.log('uh oh!');
+                    countData.prevID = message.author.id;
+                    countData.current = 0;
+                    countData.next = 1;
+                    fs.writeFile('./count.json', JSON.stringify(countData), err => {
+                        if (err) {
                         console.log('Error writing file:', err);
                         message.channel.send('Error writing to disk!');
-                    }
-                });
-                message.react('✅');
-            } else {
-                console.log('uh oh!');
-                countData.prevID = message.author.id;
-                countData.current = 0;
-                countData.next = 1;
-                fs.writeFile('./count.json', JSON.stringify(countData), err => {
-                    if (err) {
-                      console.log('Error writing file:', err);
-                      message.channel.send('Error writing to disk!');
-                    }
-                });
-                message.react('❌');
-                message.channel.send(`<@${message.author.id}> ruined it! Laugh at this blunder!\nHighscore:${countData.highscore}`);
-            }
-        });
+                        }
+                    });
+                    message.react('❌');
+                    message.channel.send(`<@${message.author.id}> ruined it! Laugh at this blunder!\nHighscore:${countData.highscore}`);
+                }
+            });
+        }
         // console.log(messageToNumber);
     }
     // Funny chat responses idk
@@ -240,6 +277,7 @@ client.on(Events.MessageCreate, async message => {
     }
     console.log(message.content);
 });
-
+// Jitters, but it's fine for now
+setInterval(userInput, 100);
 // Log in to Discord, this should ALWAYS be the last line of code!
 client.login(config.token);
