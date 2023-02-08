@@ -5,6 +5,7 @@ let countingTest = false;
 let countingPath = 'count';
 let verbose = false;
 const fs = require('fs');
+const os = require('node:os');
 const chalk = require('chalk');
 const error = chalk.redBright;
 const sucess = chalk.greenBright;
@@ -76,6 +77,9 @@ function userInput() {
     readline.question('', uinput => {
         const messageArr = uinput.split(/ + /);
         switch (uinput) {
+            case 'help':
+                log(chalk.blueBright(chalk.bold('quit disableCount enableCount')));
+                break;
             case 'quit':
                 log(error('QUITTING'));
                 process.exit();
