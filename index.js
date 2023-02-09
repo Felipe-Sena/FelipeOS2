@@ -4,6 +4,7 @@ let counting = true;
 let countingTest = false;
 let countingPath = 'count';
 let verbose = false;
+let useDevChannels = false;
 const fs = require('fs');
 const os = require('node:os');
 const chalk = require('chalk');
@@ -15,38 +16,39 @@ const { Client, Events, GatewayIntentBits, PermissionsBitField, codeBlock, Activ
 const readline = require('readline').createInterface({ input: process.stdin, output: process.stdout });
 const config = require ('./config.json');
 const { argv } = require('node:process');
+const commandChannels = require('./command-lineChannels.json');
 const susWords = require('./triggerWords.json');
 const susResponses = require('./triggerResponses.json');
 const entertainment = require('./randomEntertainment.json');
 const info = require('./info.json');
 const prefix = '-';
-const messageOverride = 'nil';
-const channelOverride = 'nil';
 let args;
 // Launch Arguments
 
 argv.forEach((val) => {
-  // console.log(`${index}: ${val}`);
-  // console.log(val);
-  args = [val];
-  // log(args);
-
-  if (args.includes('-h' || '-help')) {
-    log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -testcount -verbose')));
+    // console.log(`${index}: ${val}`);
+    // console.log(val);
+    args = [val];
+    // log(args);
+    if (args.includes('-h' || '-help')) {
+    log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -testcount -verbose -usedev')));
     process.exit();
-  }
-  if (args.includes('-testing')) {
+    }
+    if (args.includes('-testing')) {
     testing = true;
-  }
-  if (args.includes('-nocount')) {
+    }
+    if (args.includes('-nocount')) {
     counting = false;
-  }
-  if (args.includes('-testcount') && !args.includes('-nocount')) {
+    }
+    if (args.includes('-testcount') && !args.includes('-nocount')) {
     countingTest = true;
-  }
-  if (args.includes('-verbose')) {
+    }
+    if (args.includes('-verbose')) {
     verbose = true;
-  }
+    }
+    if (args.includes('-usedev')) {
+    useDevChannels = true;
+    }
 });
 // Initialize a new client instance
 const client = new Client({ intents: [
@@ -75,10 +77,12 @@ function jsonReader(filePath, cb) {
 
 function userInput() {
     readline.question('', uinput => {
-        const messageArr = uinput.split(/ + /);
-        switch (uinput) {
+        const commandArray = uinput.split(' ');
+        let evenTest = 0;
+        // log(commandArray);
+        switch (commandArray[0]) {
             case 'help':
-                log(chalk.blueBright(chalk.bold('quit disableCount enableCount')));
+                log(chalk.blueBright(chalk.bold('quit disableCount enableCount sendMessage {channel} {message} channelList')));
                 break;
             case 'quit':
                 log(error('QUITTING'));
@@ -99,12 +103,68 @@ function userInput() {
                     break;
                 }
                 log(warn('The bot is already counting'));
+                break;
+            case 'sendMessage':
+                // Check if we have a channel chosen
+                if (commandArray.length > 1) {
+                    log('CommandArray passes lenghtCheck');
+                    if (commandChannels.channels.some(element => commandArray[1].includes(element)) && !useDevChannels) {
+                         // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
+                         // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
+                         const channelID = commandChannels.channels[commandChannels.channels.indexOf(commandArray[1]) + 1];
+                         const channelSend = client.channels.cache.find(channelOverride => channelOverride.id === channelID);
+                         commandArray.splice(0, 2);
+                         // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
+                         const joinedArr = commandArray.join(' ');
+                         channelSend.send(joinedArr);
+                         // Prevent the bot from sending an empty string (only spaces)
+                         if (!/\S/.test(joinedArr)) {
+                            log(error('NonFatalError: '), warn('Cannot send messages composed of only whitespace'));
+                            break;
+                        }
+                    } else if (!useDevChannels) { log(error('NonFatalError: '), warn('Missing channel, do the channelList command to get a list of available channels (mounted to a json file)')); }
+                    if (commandChannels.channelsDev.some(element => commandArray[1].includes(element))) {
+                        // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
+                        // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
+                        const channelID = commandChannels.channelsDev[commandChannels.channelsDev.indexOf(commandArray[1]) + 1];
+                        const channelSend = client.channels.cache.find(channelOverride => channelOverride.id === channelID);
+                        commandArray.splice(0, 2);
+                        // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
+                        const joinedArr = commandArray.join(' ');
+                        // Prevent the bot from sending an empty string (only spaces)
+                        if (!/\S/.test(joinedArr)) {
+                            log(error('NonFatalError: '), warn('Cannot send messages composed of only whitespace'));
+                            break;
+                        }
+                        channelSend.send(joinedArr);
+                    } else { log(error('NonFatalError: '), warn('Missing channel, do the channelList command to get a list of available channels (mounted to a json file)')); }
+                }
+                break;
+            case 'channelList':
+                // Important to note that we are testing if a number is even because the file structure goes CHANNEL NAME, ID and so on, so 0 is the first name, 2 is the second name and so on.
+                if (useDevChannels) {
+                    for (let i = 0; i < commandChannels.channelsDev.length; i++) {
+                        evenTest = i % 2;
+                        if (evenTest === 0) {
+                            process.stdout.write(chalk.blueBright(chalk.bold(commandChannels.channelsDev[i])) + ' ');
+                        }
+                        process.stdout.write('\n');
+                    }
+                    break;
+                }
+                for (let i = 0; i < commandChannels.channels.length; i++) {
+                    evenTest = i % 2;
+                    if (evenTest === 0) {
+                        process.stdout.write(chalk.blueBright(chalk.bold(commandChannels.channels[i])) + ' ');
+                    }
+                }
+                process.stdout.write('\n');
+                break;
         }
         readline.close;
         userInput();
     });
 }
-// Use a set interval like setInterval(userInput, 500);
 // Run this only once when the client is ready
 // Arrow function using 'c' as a parameter for client so we don't have conflicting vars
 client.once(Events.ClientReady, c => {
@@ -133,7 +193,7 @@ client.on(Events.GuildMemberAdd, member => {
 
 client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
-    log(chalk.blue(chalk.bold(message.author.username) + ' ' + chalk.whiteBright(message.content)));
+    log(chalk.blueBright(chalk.bold(message.author.username) + chalk.whiteBright(' on ') + chalk.cyanBright(chalk.bold(message.channel.name)) + chalk.whiteBright(' > ', message.content)));
     if (verbose) log(`Random Number = ${randomNumber}`);
     // This is for the count channel
     if (counting) {
@@ -240,6 +300,9 @@ client.on(Events.MessageCreate, async message => {
             break;
         case 'randommusic':
             await message.channel.send(entertainment.music[Math.floor(randomNumber * entertainment.music.length)]);
+            break;
+        case 'sysinfo':
+            await message.channel.send(codeBlock(`CPU ARCHITECTURE: ${os.arch()}\nTOTAL MEMORY: ${os.totalmem}\nFREE MEMORY: ${os.freemem}\nMACHINE TYPE: ${os.machine}\nOPERATING SYSTEM: ${os.type()}\nUPTIME (IN SECONDS): ${os.uptime}`));
             break;
         case 'bulkdel':
             // Checks to see if the person has admin
