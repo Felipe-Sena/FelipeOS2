@@ -123,21 +123,23 @@ function userInput() {
                             break;
                         }
                     } else if (!useDevChannels) { log(error('NonFatalError: '), warn('Missing channel, do the channelList command to get a list of available channels (mounted to a json file)')); }
-                    if (commandChannels.channelsDev.some(element => commandArray[1].includes(element))) {
-                        // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
-                        // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
-                        const channelID = commandChannels.channelsDev[commandChannels.channelsDev.indexOf(commandArray[1]) + 1];
-                        const channelSend = client.channels.cache.find(channelOverride => channelOverride.id === channelID);
-                        commandArray.splice(0, 2);
-                        // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
-                        const joinedArr = commandArray.join(' ');
-                        // Prevent the bot from sending an empty string (only spaces)
-                        if (!/\S/.test(joinedArr)) {
-                            log(error('NonFatalError: '), warn('Cannot send messages composed of only whitespace'));
-                            break;
-                        }
-                        channelSend.send(joinedArr);
-                    } else { log(error('NonFatalError: '), warn('Missing channel, do the channelList command to get a list of available channels (mounted to a json file)')); }
+                    if (useDevChannels) {
+                        if (commandChannels.channelsDev.some(element => commandArray[1].includes(element))) {
+                            // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
+                            // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
+                            const channelID = commandChannels.channelsDev[commandChannels.channelsDev.indexOf(commandArray[1]) + 1];
+                            const channelSend = client.channels.cache.find(channelOverride => channelOverride.id === channelID);
+                            commandArray.splice(0, 2);
+                            // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
+                            const joinedArr = commandArray.join(' ');
+                            // Prevent the bot from sending an empty string (only spaces)
+                            if (!/\S/.test(joinedArr)) {
+                                log(error('NonFatalError: '), warn('Cannot send messages composed of only whitespace'));
+                                break;
+                            }
+                            channelSend.send(joinedArr);
+                        } else { log(error('NonFatalError: '), warn('Missing channel, do the channelList command to get a list of available channels (mounted to a json file)')); }
+                    }
                 }
                 break;
             case 'channelList':
