@@ -2,3 +2,5 @@ config.json
 count.json
 devCount.json
 command-lineChannels.json
+logs.txt
+questioningLogs.txt
