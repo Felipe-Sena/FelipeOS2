@@ -1,6 +1,6 @@
 TODO:
 Trivia //TBD
-Message logging for moderation (moderate improper language like slurs)
+Message logging for moderation (moderate improper language like slurs) -- FINISHED
 Voice channel functions like music
 Minigames
 Rework pp command
