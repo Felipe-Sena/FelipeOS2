@@ -5,8 +5,14 @@ let countingTest = false;
 let countingPath = 'count';
 let verbose = false;
 let useDevChannels = false;
+let enableChatGPT = true;
+let useDevAccount = false;
+let logging = true;
+// let logging = true;
+let args;
 const fs = require('fs');
 const os = require('node:os');
+const { PythonShell } = require('python-shell');
 const chalk = require('chalk');
 const error = chalk.redBright;
 const sucess = chalk.greenBright;
@@ -22,7 +28,6 @@ const susResponses = require('./triggerResponses.json');
 const entertainment = require('./randomEntertainment.json');
 const info = require('./info.json');
 const prefix = '-';
-let args;
 // Launch Arguments
 
 argv.forEach((val) => {
@@ -31,24 +36,33 @@ argv.forEach((val) => {
     args = [val];
     // log(args);
     if (args.includes('-h' || '-help')) {
-    log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -testcount -verbose -usedev')));
-    process.exit();
-    }
-    if (args.includes('-testing')) {
-    testing = true;
-    }
-    if (args.includes('-nocount')) {
-    counting = false;
-    }
-    if (args.includes('-testcount') && !args.includes('-nocount')) {
-    countingTest = true;
-    }
-    if (args.includes('-verbose')) {
-    verbose = true;
-    }
-    if (args.includes('-usedev')) {
-    useDevChannels = true;
-    }
+        log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -testcount -verbose -usedev -nolog -nogpt -testingAccount')));
+            process.exit();
+        }
+        if (args.includes('-testing')) {
+            testing = true;
+        }
+        if (args.includes('-nocount')) {
+            counting = false;
+        }
+        if (args.includes('-testcount') && !args.includes('-nocount')) {
+            countingTest = true;
+        }
+        if (args.includes('-verbose')) {
+            verbose = true;
+        }
+        if (args.includes('-usedev')) {
+            useDevChannels = true;
+        }
+        if (args.includes('-nolog')) {
+            logging = false;
+        }
+        if (args.includes('-nogpt')) {
+            enableChatGPT = false;
+        }
+        if (args.includes('-testingAccount')) {
+            useDevAccount = true;
+        }
 });
 // Initialize a new client instance
 const client = new Client({ intents: [
@@ -60,6 +74,16 @@ const client = new Client({ intents: [
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessageReactions,
 ] });
+
+function fileAppend(name, text, encoding, cb) {
+    fs.appendFile(name, `\n${text}`, encoding, err => {
+        if (err) {
+            return cb && cb(err);
+        }
+        if (verbose) log('WriteSuccessfull');
+    });
+
+}
 
 function jsonReader(filePath, cb) {
     fs.readFile(filePath, (err, fileData) => {
@@ -79,10 +103,10 @@ function userInput() {
     readline.question('', uinput => {
         const commandArray = uinput.split(' ');
         let evenTest = 0;
-        // log(commandArray);
+        // log(commandArray);try
         switch (commandArray[0]) {
             case 'help':
-                log(chalk.blueBright(chalk.bold('quit disableCount enableCount sendMessage {channel} {message} channelList')));
+                log(chalk.blueBright(chalk.bold('quit disableCount enableCount sendMessage {channel} {message} channelList toggleChatGPT')));
                 break;
             case 'quit':
                 log(error('QUITTING'));
@@ -103,6 +127,15 @@ function userInput() {
                     break;
                 }
                 log(warn('The bot is already counting'));
+                break;
+            case 'toggleChatGPT':
+                if (!enableChatGPT) {
+                    enableChatGPT = true;
+                    log(sucess('ChatGPT is now enabled'));
+                } else {
+                    enableChatGPT = false;
+                    log(sucess('ChatGPT is now disabled'));
+                }
                 break;
             case 'sendMessage':
                 // Check if we have a channel chosen
@@ -195,7 +228,24 @@ client.on(Events.GuildMemberAdd, member => {
 
 client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
+    const date = new Date(message.createdTimestamp);
     log(chalk.blueBright(chalk.bold(message.author.username) + chalk.whiteBright(' on ') + chalk.cyanBright(chalk.bold(message.channel.name)) + chalk.whiteBright(' > ', message.content)));
+    // Logs the questioning channel
+    if (message.channel.id === config.questioningChannel) {
+        fileAppend('questioningLogs.txt', `${date}: ${message.author.username} on ${message.channel.name} > ${message.content}`, 'utf-8', (err) => {
+            if (err) {
+                log(error('Error writing file', err));
+            }
+        });
+    }
+    // Logs everything else
+    if (message.author.id !== config.CHEESEBOT && logging && message.channel.id !== config.questioningChannel) {
+        fileAppend('logs.txt', `${date}: ${message.author.username} on ${message.channel.name} > ${message.content}`, 'utf-8', (err) => {
+            if (err) {
+                log(error('Error writing file', err));
+            }
+        });
+    }
     if (verbose) log(`Random Number = ${randomNumber}`);
     // This is for the count channel
     if (counting) {
@@ -260,7 +310,6 @@ client.on(Events.MessageCreate, async message => {
     const command = messageArray[0];
     let preProcessedArg = '';
     let defaultArg = 0;
-    const date = new Date(message.createdTimestamp);
     // if (verbose) console.log(chalk.blueBright(messageArray));
     // if (verbose) console.log(`preProcess = ${preProcess}\npreProcess0 = ${preProceess0}\nmessageArray = ${messageArray}\ncommand = ${command}\nmessageArray Lenght = ${messageArray.length}`);
     let containsArg = false;
@@ -271,6 +320,39 @@ client.on(Events.MessageCreate, async message => {
         if (verbose) log(chalk.blueBright(containsArg));
     }
     switch (command) {
+        case 'chatgpt':
+                if (!enableChatGPT) {
+                    message.reply('Chat GPT is currently disabled, this might be for testing or the service has been blocked due to payments');
+                    return;
+                }
+                // Join args
+                messageArray.splice(0, 1);
+                // eslint-disable-next-line no-case-declarations
+                const prompt = messageArray.join(' ');
+                log(prompt);
+                // channelSend.send(joinedArr);
+                message.reply('Generating...');
+                try {
+                    // Can cause crashes with certain chars;
+                    PythonShell.run('./chatGPT.py', { args: [prompt] }, function(results) {
+                        // if (err) throw new err;
+                        if (results === null) {
+                            log(error('NULL RESULT FROM CHATGPT'));
+                            message.reply('Null response, oops!');
+                            return;
+                        }
+                        if (verbose) log(results);
+                        // log(results.toString().length);
+                        if (results.toString.length < 2000) {
+                            message.channel.send(results.join('\n'));
+                        } else {
+                            message.reply('Generated message is too long!');
+                        }
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
+                break;
         case 'emergencyswitch':
             if (message.author.id === config.OwnerID || message.author.id === config.HelperID) {
                 await message.channel.send('Quitting...');
@@ -304,7 +386,7 @@ client.on(Events.MessageCreate, async message => {
             await message.channel.send(entertainment.music[Math.floor(randomNumber * entertainment.music.length)]);
             break;
         case 'sysinfo':
-            await message.channel.send(codeBlock(`CPU ARCHITECTURE: ${os.arch()}\nTOTAL MEMORY: ${os.totalmem}\nFREE MEMORY: ${os.freemem}\nMACHINE TYPE: ${os.machine}\nOPERATING SYSTEM: ${os.type()}\nUPTIME (IN SECONDS): ${os.uptime}`));
+            await message.channel.send(codeBlock(`CPU ARCHITECTURE: ${os.arch()}\nTOTAL MEMORY: ${os.totalmem / 1e+9}GB\nFREE MEMORY: ${os.freemem / 1e+9}GB\nMACHINE TYPE: ${os.machine}\nOPERATING SYSTEM: ${os.type()}\nUPTIME (IN SECONDS): ${os.uptime}`));
             break;
         case 'bulkdel':
             // Checks to see if the person has admin
@@ -383,4 +465,8 @@ client.on(Events.MessageCreate, async message => {
     }
 });
 // Log in to Discord, this should ALWAYS be the last line of code!
-client.login(config.token);
+if (!useDevAccount) {
+    client.login(config.token);
+} else {
+    client.login(config.testingToken);
+}
