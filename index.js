@@ -142,19 +142,19 @@ function userInput() {
                 if (commandArray.length > 1) {
                     log('CommandArray passes lenghtCheck');
                     if (commandChannels.channels.some(element => commandArray[1].includes(element)) && !useDevChannels) {
-                         // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
-                         // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
-                         const channelID = commandChannels.channels[commandChannels.channels.indexOf(commandArray[1]) + 1];
-                         const channelSend = client.channels.cache.find(channelOverride => channelOverride.id === channelID);
-                         commandArray.splice(0, 2);
-                         // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
-                         const joinedArr = commandArray.join(' ');
-                         channelSend.send(joinedArr);
-                         // Prevent the bot from sending an empty string (only spaces)
-                         if (!/\S/.test(joinedArr)) {
-                            log(error('NonFatalError: '), warn('Cannot send messages composed of only whitespace'));
-                            break;
+                        // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
+                        // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
+                        const channelID = commandChannels.channels[commandChannels.channels.indexOf(commandArray[1]) + 1];
+                        const channelSend = client.channels.cache.find(channelOverride => channelOverride.id === channelID);
+                        commandArray.splice(0, 2);
+                        // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
+                        const joinedArr = commandArray.join(' ');
+                        if (!/\S/.test(joinedArr)) {
+                        log(error('NonFatalError: '), warn('Cannot send messages composed of only whitespace'));
+                        break;
                         }
+                        channelSend.send(joinedArr);
+                        // Prevent the bot from sending an empty string (only spaces)
                     } else if (!useDevChannels) { log(error('NonFatalError: '), warn('Missing channel, do the channelList command to get a list of available channels (mounted to a json file)')); }
                     if (useDevChannels) {
                         if (commandChannels.channelsDev.some(element => commandArray[1].includes(element))) {
