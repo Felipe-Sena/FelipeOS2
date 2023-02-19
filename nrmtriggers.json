@@ -1,0 +1,6 @@
+{
+    "okTriggers": ["ok", "okay", "alright", "sure", "yes", "yep", "uh huh"],
+    "negativeTriggers": ["no", "negative", "nope", "nah", "nuh uh"],
+    "questions": ["what", "waht", "huh"],
+    "specialChars": ["!", "?", ".", ";"]
+}
