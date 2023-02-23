@@ -1,6 +1,6 @@
 {
     "credits": "Felipe Sena Costa: Coding\nSp00ketti: Additional help\nThe Swomp Server: Material for random videos and gifs\nOther people have also helped in the development of this bot, credit retroactively applies to the people who aided in the development of the original FelipeOS bot, but won't be named here\nProudly uses Discord.js!",
-    "commands": "-versionnumber = Returns the current version\n-credits = Shows creddits and attributions\n-latestupdate = Shows patch notes\n-randomvideo = Shows a random youtube video\n-randomgif = Shows a random gif\n-randommusic = Shows a random song\n-bulkdel {int} = ADMIN ONLY! Deletes a set number of messages\n-rolecreate {name} {admin/normal} = ADMIN ONLY! Creates a new role\n-roledelete {name} = ADMIN ONLY! Deletes an existing role\n-ppsize = Dick size command (real)\n -chatgpt {prompt (SPECIAL: accepts spaces) = Uses chatGPT",
-    "update": "The bot can now log messages and integrated chatGPT",
-    "version": "1.22.2"
+    "commands": "-settings {setting} {true/false} = ADMIN ONLY! Allows the user to change bot settings\n-versionnumber = Returns the current version\n-credits = Shows credits and attributions\n-latestupdate = Shows patch notes\n-randomvideo = Shows a random youtube video\n-randomgif = Shows a random gif\n-randommusic = Shows a random song\n-bulkdel {int} = ADMIN ONLY! Deletes a set number of messages\n-rolecreate {name} {admin/normal} = ADMIN ONLY! Creates a new role\n-roledelete {name} = ADMIN ONLY! Deletes an existing role\n-ppsize = Dick size command (real)\n-chatgpt {prompt (SPECIAL: accepts spaces) = Uses chatGPT",
+    "update": "Settings",
+    "version": "1.24.3"
 }
