@@ -1,13 +1,18 @@
 // Variables and classes
+const startupSettings = require('./settings.json');
 let testing = false;
-let counting = true;
+let counting = startupSettings.count;
 let countingTest = false;
 let countingPath = 'count';
 let verbose = false;
 let useDevChannels = false;
-let enableChatGPT = true;
+let enableChatGPT = startupSettings.chatgpt;
 let useDevAccount = false;
-let logging = true;
+let logging = startupSettings.logging;
+let randomEntertainment = startupSettings.randomentertainment;
+let susRandomresponses = startupSettings.susrandomresponse;
+let fChatResponses = startupSettings.fchatresponses;
+let targeting = startupSettings.targeting;
 // let logging = true;
 let args;
 const fs = require('fs');
@@ -294,7 +299,7 @@ client.on(Events.MessageCreate, async message => {
         }
     }
     // Funny chat responses idk
-    if (susWords.words.some(element => message.content.toLowerCase().includes(element))) {
+    if (susWords.words.some(element => message.content.toLowerCase().includes(element)) && susRandomresponses) {
         message.reply(susResponses.responses[Math.floor(randomNumber * susResponses.responses.length)]);
     }
     /* Easily abusable, fix fix fix!
@@ -320,6 +325,67 @@ client.on(Events.MessageCreate, async message => {
         if (verbose) log(chalk.blueBright(containsArg));
     }
     switch (command) {
+        case 'settings':
+            if (message.member.permissionsIn(message.channel).has('Administrator')) {
+                // Maybe remove this if statement, but it's 2:22 am
+                if (messageArray.length === 2) {
+                    jsonReader('./settings.json', (err, settingsData) => {
+                        if (err) {
+                            log(error('Error reading file', err));
+                        }
+                        const nameArg = messageArray[1];
+                        log(nameArg);
+                        if (nameArg === 'list') {
+                            if (verbose) log(JSON.stringify(settingsData).replace(/{*"*}*/g, '').replace(/,/g, '\n').replace(/:/g, ': ').replace(/false/g, 'disabled').replace(/true/g, 'enabled'));
+                            // Formats the json to be ordered and separated by \n
+                            message.channel.send(codeBlock(JSON.stringify(settingsData).replace(/{*"*}*/g, '').replace(/,/g, '\n').replace(/:/g, ': ').replace(/false/g, 'disabled').replace(/true/g, 'enabled')));
+                        } else if (nameArg === 'help') {
+                            message.reply('The settings command allows you to change the bot settings on runtime, previously this was only possible on compile/init arguments, to use it follow the syntax below:```-settings {setting} {true/false}``` To find the list of settings do:```-settings list```');
+                        } else {
+                            message.reply('Unknown command, did you mean to do the following commands? ```-settings list | -settings help```');
+                        }
+                    });
+                } else if (messageArray.length === 3) {
+                    jsonReader('./settings.json', (err, settingsData) => {
+                        if (err) {
+                            log(error('Error reading file', err));
+                        }
+                        // Avoids endless if statements by parsing the settings and changing the values on the specific key automatically
+                        const nameArg = messageArray[1];
+                        const boolArg = (messageArray[2].toLowerCase() === 'true');
+                        const jsonData = JSON.parse(JSON.stringify(settingsData));
+                        // I need that below so I can see if the json has the key we're trying to change
+                        // eslint-disable-next-line no-prototype-builtins
+                        if (!jsonData.hasOwnProperty(nameArg)) {
+                            message.reply('Entry does not exist, did your message have a typo?\nTo see a list of settings do: ```-settings list``` to see a list of changeable settings\nThe syntax is: ```-settings {setting} {true/false}```');
+                            return;
+                        }
+                        jsonData[nameArg] = boolArg;
+                        // Sync variables, is this slow?
+                        enableChatGPT = jsonData.chatgpt;
+                        logging = jsonData.logging;
+                        susRandomresponses = jsonData.susrandomresponses;
+                        fChatResponses = jsonData.fchatresponses;
+                        randomEntertainment = jsonData.randomentertainment;
+                        targeting = jsonData.targeting;
+                        counting = jsonData.count;
+                        if (verbose) {
+                            log(jsonData);
+                            log(`${enableChatGPT}\n${logging}\n${susRandomresponses}\n${fChatResponses}\n${randomEntertainment}\n${targeting}\n${counting}`);
+                        }
+                        fs.writeFile('./settings.json', JSON.stringify(jsonData), err => {
+                            if (err) {
+                                log(error('Error writing to disk', err));
+                            }
+                        });
+                    });
+                } else {
+                    message.reply('Please input a valid command, or, to see a list of settings do: ```-settings list```\nThe syntax is ```-settings {setting} {true/false}```');
+                }
+            } else {
+                message.reply('You do not have the permission to use this command');
+            }
+            break;
         case 'chatgpt':
                 if (!enableChatGPT) {
                     message.reply('Chat GPT is currently disabled, this might be for testing or the service has been blocked due to payments');
@@ -374,15 +440,19 @@ client.on(Events.MessageCreate, async message => {
             await message.channel.send(codeBlock(info.commands));
             break;
         case 'randomvideo':
+            if (!randomEntertainment) return;
             await message.reply(`Here is your video: ${entertainment.videos[Math.floor(randomNumber * entertainment.videos.length)]}`);
             break;
         case 'randomimage':
+            if (!randomEntertainment) return;
             await message.channel.send(entertainment.images[Math.floor(randomNumber * entertainment.images.length)]);
             break;
         case 'randomgif':
+            if (!randomEntertainment) return;
             await message.channel.send(entertainment.gifs[Math.floor(randomNumber * entertainment.gifs.length)]);
             break;
         case 'randommusic':
+            if (!randomEntertainment) return;
             await message.channel.send(entertainment.music[Math.floor(randomNumber * entertainment.music.length)]);
             break;
         case 'sysinfo':
