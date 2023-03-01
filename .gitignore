@@ -5,3 +5,5 @@ command-lineChannels.json
 settings.json
 logs.txt
 questioningLogs.txt
+data.json
+dataBKP.json
