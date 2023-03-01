@@ -1,6 +1,6 @@
 // Variables and classes
 const startupSettings = require('./settings.json');
-let testing = false;
+let testing = false ;
 let counting = startupSettings.count;
 let countingTest = false;
 let countingPath = 'count';
