@@ -11,7 +11,8 @@
   "dependencies": {
     "chalk": "^4.1.2",
     "discord.js": "^14.7.1",
-    "python-shell": "^3.0.1"
+    "python-shell": "^3.0.1",
+    "undici": "^5.20.0"
   },
   "devDependencies": {
     "eslint": "^8.31.0"
