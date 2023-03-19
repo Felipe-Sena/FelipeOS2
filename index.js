@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 /*
+------------------------------------------------------------------------------------------------------------
     Copyright Felipe Sena | 2023 | Licenced under the GNU General Public Licence | Read the licence on the LICENCE.txt file | Node libraries might not have the same license as this file.
     Includes the following modules:
     chalk
@@ -7,7 +8,8 @@
     python-shell
     undici
     Rewritten for better performance, organization and for refactoring
-------------------------------------------------------------------------------------------------------------*/
+------------------------------------------------------------------------------------------------------------
+*/
 // Variable definitions
 'use strict';
 const data = require('./json/data.json');
@@ -401,6 +403,58 @@ client.on(Events.MessageCreate, async message => {
                 break;
             }
             break;
+
+        case 'rolecreate':
+            if (!message.member.permissionsIn(message.channel).has('Administrator')) {
+                message.reply('You dont have the permission to use this command');
+                return;
+            } else if (parsedArgs[0] === undefined || parsedArgs[1] === undefined) {
+                await message.reply('Please input a name and a scope for the new role');
+                return;
+            }
+            switch (parsedArgs[1]) {
+                case 'admin':
+                    await message.guild.roles.create({
+                        name: parsedArgs[0],
+                        color: 'Red',
+                        permissions: [PermissionsBitField.Flags.Administrator],
+                        position: message.guild.members.me.roles.botRole.position,
+                    });
+                    message.channel.send(`New role "${parsedArgs[0]}" with administrator scope created by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
+                    break;
+                case 'regular':
+                    await message.guild.roles.create({
+                        name: parsedArgs[0],
+                        color: 'Green',
+                        permissions: [PermissionsBitField.Default],
+                        position: message.guild.members.me.roles.botRole.position - 5,
+                    });
+                    message.channel.send(`New role "${parsedArgs[0]}" with default scope created by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
+                    break;
+                default:
+                    message.reply('Unknown permission scope, you can only use admin and regular (Format: -rolecreate {name} {admin/regular}');
+                    break;
+            }
+            break;
+
+        case 'roledelete':
+            if (!message.member.permissionsIn(message.channel).has('Administrator')) {
+                message.reply('You dont have the permission to use this command');
+                return;
+            } else if (parsedArgs[0] === undefined) {
+                await message.reply('Please input the name of the role you want to delete');
+                return;
+            }
+            // I don't know if an error will happen here, if it does I'll change it to send a message instead of just logging
+            try {
+                const chosenRole = message.guild.roles.cache.find(role => role.name === parsedArgs[0]);
+                await chosenRole.delete();
+                message.channel.send(`Role "${chosenRole.name}" was deleted by <@${message.author.id}> at ${date.toLocaleDateString('en-GB')} ${date.toLocaleTimeString('default')}`);
+            } catch (err) {
+                log(error(err));
+            }
+            break;
+
         // Fun stuff
 
         case 'random':
@@ -408,10 +462,12 @@ client.on(Events.MessageCreate, async message => {
                 message.reply('Random commands are disabled');
                 return;
             }
+
             switch (parsedArgs[0]) {
                 case undefined:
                     message.reply('Missing argument! Did you forget to specify what random thing you want? If you are confused be sure to do "-help"');
                     break;
+
                 case 'cat':
                     const randomCat = await request('https://aws.random.cat/meow');
                     const rJS = await randomCat.body.json();
@@ -426,21 +482,56 @@ client.on(Events.MessageCreate, async message => {
                     log(rJS.file);
                     userInput();
                     break;
+
+                case 'dog':
+                    const randomDogRequest = await request('https://dog.ceo/api/breeds/image/random');
+                    const randomDog = await randomDogRequest.body.json();
+                    const randomDogEmbed = new EmbedBuilder()
+                        .setColor([117, 65, 240])
+                        .setTitle('A random dog!')
+                        .setDescription('woof!')
+                        .setImage(randomDog.message)
+                        .setTimestamp()
+                        .setFooter({ text: `Prompted by ${message.author.username}` });
+                    message.channel.send({ embeds: [randomDogEmbed] });
+                    break;
+
+                // Add lorem picsum later
+
+                case 'joke':
+                    const randomjokeRequest = await request('https://api.api-ninjas.com/v1/dadjokes?limit=1', { headers: { 'X-Api-Key': data.config.apiNinjasKey } });
+                    const randomJoke = await randomjokeRequest.body.json();
+                    message.reply(randomJoke[0].joke);
+                    break;
+
                 case 'video':
                     message.reply(data.randomEntertainment.videos[Math.floor(randomNumber * data.randomEntertainment.videos.length)]);
                     break;
+
                 case 'image':
                     message.reply(data.randomEntertainment.images[Math.floor(randomNumber * data.randomEntertainment.images.length)]);
                     break;
+
                 case 'gif':
                     message.reply(data.randomEntertainment.gifs[Math.floor(randomNumber * data.randomEntertainment.gifs.length)]);
                     break;
+
                 case 'song':
                     message.reply(data.randomEntertainment.music[Math.floor(randomNumber * data.randomEntertainment.music.length)]);
                     break;
+
                 default:
                     message.reply('Unknown command, please run "-help"');
             }
+            break;
+
+        case 'ppsize':
+            // I love coding I love coding I love coding I love coding I love coding I love coding I love coding I love coding I love coding I love coding I love coding I love coding
+            message.channel.send(`<@${message.member.id}>'s dick is this big:\n8${'='.repeat(randomNumber * 14)}D`);
+            break;
+
+        default:
+            await message.reply('Unknown command... maybe do -help?');
     }
 });
 
