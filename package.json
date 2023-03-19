@@ -1,13 +1,13 @@
 {
-  "name": "wp",
-  "version": "0.0.0",
-  "description": "ConfBranch",
+  "name": "felipeos2",
+  "version": "1.35.3",
+  "description": "MAIN",
   "main": "./index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "FSC",
-  "license": "ISC",
+  "license": "GNU GENERAL PUBLIC LICENSE",
   "dependencies": {
     "chalk": "^4.1.2",
     "discord.js": "^14.7.1",
