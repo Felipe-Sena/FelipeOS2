@@ -5,25 +5,24 @@
     Includes the following modules:
     chalk
     discord.js
-    python-shell
     undici
     Rewritten for better performance, organization and for refactoring
 ------------------------------------------------------------------------------------------------------------
 */
-// Variable definitions
 'use strict';
+// Variable definitions
 const data = require('./json/data.json');
+const count = require('./json/count.json');
 let counting = data.settings.count;
-let messageCounter = 0;
 let logging = data.settings.logging;
-let randomEntertainment = data.settings.randomentertainment;
+const randomEntertainment = data.settings.randomentertainment;
 let fChatResponses = data.settings.fchatresponses;
-let randomResponses = data.settings.susrandomresponse;
-let targeting = data.settings.targeting;
+const randomResponses = data.settings.susrandomresponse;
+// let targeting = data.settings.targeting; might deprecate
 let args;
 let restartTimeout;
 let testing = false;
-let countingTest = false;
+// let countingTest = false;
 let verbose = false;
 let useDevChannels = false;
 let useDevAccount = true;
@@ -43,7 +42,7 @@ const description = chalk.cyanBright.bold;
 const log = console.log;
 const readline = require('readline').createInterface({ input: process.stdin, output: process.stdout });
 const { argv } = require('node:process');
-const { Client, Events, GatewayIntentBits, PermissionsBitField, ActivityType, Message, codeBlock, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, Events, GatewayIntentBits, PermissionsBitField, ActivityType, codeBlock, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { request } = require('undici');
 
 // Functions
@@ -85,89 +84,41 @@ function fileAppend(name, text, encoding, cb) {
     });
 }
 
-// This does not work, it ends up erasing the count.json file. Rewrite
-function count(message) {
-    if (counting) {
-        // TODO: Implement counting test as a startup command! | FIX JSON ERASURE
-        // Using data as a var name here is pretty confusing, since we're acessing ./json/count. Maybe I should rewrite this later...
-        const messageToNumber = parseInt(message.content);
-        jsonReader('./json/count.json', (err, Data) => {
-            logVerbose('table', Data);
-            // Maybe rewrite this to use 2 files, this is way too unreadable in my opinion...
-            if (countingTest) {
-                if (messageToNumber === Data.devCount.next && message.author.id !== Data.devCount.prevID) {
-                    Data.devCount.prevID = message.author.id;
-                    Data.devCount.current = messageToNumber;
-                    Data.devCount.next++;
-                    if (Data.devCount.current > Data.devCount.highscore) {
-                        Data.devCount.highscore = Data.devCount.current;
-                    }
-                    fs.writeFile('./json/count.json', JSON.stringify(Data), err => {
-                        if (err) {
-                            log(error('Error reading file: ', err));
-                            message.channel.send('Error writing to disk!');
-                        }
-                    });
-                    message.react('✅');
-                    logVerbose('table', Data);
-                } else {
-                    Data.devCount.prevID = message.author.id;
-                    Data.devCount.current = 0;
-                    Data.devCount.next = 1;
-                    fs.writeFile('./json/count.json', JSON.stringify(Data), err => {
-                        if (err) {
-                            log(error('Error reading file: ', err));
-                            message.channel.send('Error writing to disk!');
-                        }
-                    });
-                    message.react('❌');
-                    message.channel.send(`<@${message.author.id}> ruined it! Laugh at this blunder!\nHighscore:${Data.devCount.highscore}`);
-                    logVerbose('table', Data);
+function countFunction(message, userID, randomNumber) {
+    const messageToNumber = parseInt(message);
+    if (isNaN(messageToNumber) || message.channel.id != count.channelID) return;
+    jsonReader('./json/count.json', (err, countJSON) => {
+        if (err) {
+            log(error('Error'));
+        }
+        if (userID !== countJSON.previousUserID && messageToNumber === countJSON.nextNumber) {
+            log('win');
+            countJSON.currentNumber = messageToNumber;
+            countJSON.nextNumber = countJSON.currentNumber + 1;
+            countJSON.previousUserID = userID;
+            if (countJSON.currentNumber > countJSON.highscore) countJSON.highscore = countJSON.currentNumber + 1;
+            fs.writeFile('./json/count.json', JSON.stringify(countJSON), err => {
+                if (err) {
+                    log(error('Error'));
                 }
-                return;
-            }
-            /*
-            // Handles non numbers
-            logVerbose(messageToNumber);
-            if (isNaN(messageToNumber) && !message.author.bot) {
-                messageCounter++;
-                if (messageCounter >= 4) {
-                    message.channel.send(`Hey, just to remind you guys, the previous number is: ${Data.devCount.current}\nTyped by <@${Data.devCount.prevID}>`);
-                    messageCounter = 0;
+            });
+            message.react('✅');
+        } else {
+            log('lose');
+            countJSON.currentNumber = 0;
+            countJSON.nextNumber = 1;
+            countJSON.previousUserID = userID;
+            fs.writeFile('./json/count.json', JSON.stringify(countJSON), err => {
+                if (err) {
+                    log(error('Error'));
                 }
-                return;
-            }
-            if (messageToNumber === Data.count.next && message.author.id !== Data.count.prevID) {
-                Data.count.prevID = message.author.id;
-                Data.count.current = messageToNumber;
-                Data.count.next++;
-                if (Data.count.highscore > Data.count.current) {
-                    Data.count.highscore = Data.count.current;
-                }
-                fs.writeFile('./json/count.json', JSON.stringify(Data), err => {
-                    log(error('Error reading file: ', err));
-                    message.channel.send('Error writing to disk!');
-                });
-                message.react('✅');
-                console.table(Data);
-            } else {
-                Data.count.prevID = message.author.id;
-                Data.count.current = 0;
-                Data.count.next = 1;
-                fs.writeFile('./json/count.json', JSON.stringify(Data), err => {
-                    if (err) {
-                        log(error('Error reading file: ', err));
-                        message.channel.send('Error writing to disk!');
-                    }
-                });
-                message.react('❌');
-                message.channel.send(`<@${message.author.id}> ruined it! Laugh at this blunder!\nHighscore:${Data.count.highscore}`);
-                logVerbose('table', Data);
-            }
-            */
-        });
-    }
+            });
+            message.react('❌');
+            message.reply(`<@${userID}> ruined it! ${data.randomCountLossMessages[Math.floor(randomNumber * data.randomCountLossMessages.length)]}\nHighscore: ${countJSON.highscore}`);
+        }
+    });
 }
+
 
 function logMessages(message) {
     const date = new Date(message.createdTimestamp);
@@ -296,7 +247,7 @@ client.on(Events.MessageCreate, async message => {
 
     // Handles logging, if the channel is not the questioning channel then we'll log normally with the option to disable the logging (only disables normal logs)
     logMessages(message);
-    // count(message);
+    if (counting) countFunction(message, message.author.id, randomNumber);
 
     // Handle trigger words in chat
     if (data.triggerWords.some(element => message.content.toLowerCase().includes(element) && randomResponses)) {
@@ -305,7 +256,7 @@ client.on(Events.MessageCreate, async message => {
 
     // Parse the received message
     if (!message.content.startsWith(prefix) || message.author.bot) return;
-    const parsedMessage = message.content.slice(prefix.length).split(/ +/);
+    const parsedMessage = message.content.toLowerCase().slice(prefix.length).split(/ +/);
     const command = parsedMessage[0];
     const parsedArgs = parsedMessage.slice(1);
     logVerbose(null, `parsedMessage: ${JSON.stringify(parsedMessage)}\nparsedArgs: ${JSON.stringify(parsedArgs)}`);
@@ -389,17 +340,18 @@ client.on(Events.MessageCreate, async message => {
                 await message.channel.messages.fetch({ limit: deletionNumber }).then(fetchedMessages => {
                     const mArr = new Array(0);
                     fetchedMessages.forEach(m => {
-                        if (m.bulkDeletable) mArr.push(m.id);
+                        if (m.bulkDeletable) {
+                            mArr.push(0);
+                        }
                     });
-                    // log (mArr.length);
                     message.channel.bulkDelete(mArr.length);
                     if (mArr.length < deletionNumber) {
-                        message.reply('Could not delete all desired messages due to an API limitation, messages older than 14 days cannot be bulk deleted.');
+                        message.reply(`Could not delete all desired messages due to an API limitation (deleted ${mArr.length} messages), messages older than 14 days cannot be bulk deleted.`);
                     }
                 });
                 maxDelTriggered ? message.reply('Deletions were clamped to 100 due API limitations, if you want to delete more messages run this command again') : log('success');
             } catch (err) {
-                log(err);
+                log(error(err));
                 break;
             }
             break;
@@ -535,7 +487,6 @@ client.on(Events.MessageCreate, async message => {
     }
 });
 
-// Login
 if (!useDevAccount) {
     client.login(data.config.token);
 } else {
