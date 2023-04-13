@@ -16,7 +16,7 @@ const count = require('./json/count.json');
 let counting = data.settings.count;
 let logging = data.settings.logging;
 const randomEntertainment = data.settings.randomentertainment;
-let fChatResponses = data.settings.fchatresponses;
+// let fChatResponses = data.settings.fchatresponses;
 const randomResponses = data.settings.susrandomresponse;
 // let targeting = data.settings.targeting; might deprecate
 let args;
@@ -25,7 +25,7 @@ let testing = false;
 // let countingTest = false;
 let verbose = false;
 let useDevChannels = false;
-let useDevAccount = true;
+let useDevAccount = false;
 let sendGif = true;
 
 // Requires
@@ -96,7 +96,7 @@ function countFunction(message, userID, randomNumber) {
             countJSON.currentNumber = messageToNumber;
             countJSON.nextNumber = countJSON.currentNumber + 1;
             countJSON.previousUserID = userID;
-            if (countJSON.currentNumber > countJSON.highscore) countJSON.highscore = countJSON.currentNumber + 1;
+            if (countJSON.currentNumber > countJSON.highscore) countJSON.highscore = countJSON.currentNumber;
             fs.writeFile('./json/count.json', JSON.stringify(countJSON), err => {
                 if (err) {
                     log(error('Error'));
@@ -137,8 +137,27 @@ function logMessages(message) {
     }
 }
 
-function settings (hasPermissions, message) {
-    // TODO
+function settings(name, value) {
+    if (name === undefined || value === undefined) {
+        return;
+    }
+    jsonReader('./json/data.json', (err, dataFile) => {
+        if (err) {
+            log(error('Error reading file ', err));
+        }
+        const bool = (value === 'true');
+        // eslint-disable-next-line no-prototype-builtins
+        if (!dataFile.settings.hasOwnProperty(name)) {
+            log('Invalid entry');
+            return;
+        }
+        dataFile.settings[name] = bool;
+        fs.writeFile('./json/data.json', JSON.stringify(dataFile, null, 2), err => {
+            if (err) {
+                log(error('Error writing to disk', err));
+            }
+        });
+    });
 }
 
 // Possible fix for bot randomly disconnecting
@@ -160,7 +179,7 @@ function reconnect() {
 argv.forEach((val) => {
     args = [val];
     if (args.includes('-h' || '-help')) {
-        log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -testcount -verbose -usedev -nolog -testingAccount')));
+        log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -verbose -usedevchannels -nolog -testingAccount -nogif')));
         process.exit();
     }
     if (args.includes('-testing')) {
@@ -169,13 +188,10 @@ argv.forEach((val) => {
     if (args.includes('-nocount')) {
         counting = false;
     }
-    if (args.includes('-testcount') && !args.includes('-nocount')) {
-        countingTest = true;
-    }
     if (args.includes('-verbose')) {
         verbose = true;
     }
-    if (args.includes('-usedev')) {
+    if (args.includes('-usedevchannels')) {
         useDevChannels = true;
     }
     if (args.includes('-nolog')) {
@@ -183,6 +199,9 @@ argv.forEach((val) => {
     }
     if (args.includes('-testingAccount')) {
         useDevAccount = true;
+    }
+    if (args.includes('-nogif')) {
+        sendGif = false;
     }
 });
 
@@ -202,7 +221,6 @@ const client = new Client({ intents: [
 function userInput() {
     readline.question('', async uinput => {
         const commandArray = uinput.split(' ');
-        let isEven = 0; // Used for finding channels
         switch (commandArray[0]) {
             case 'quit':
                 log(warn('QUITTING...'));
@@ -210,15 +228,92 @@ function userInput() {
                 break;
             case 'help':
                 console.table(data.userInputHelp);
-                userInput();
                 break;
             case 'toggleCount':
-                // TODO
-                userInput();
+                if (counting) {
+                    counting = false;
+                    log(success('Counting is now disabled'));
+                } else {
+                    counting = true;
+                    log(success('Counting is now enabled'));
+                }
+                break;
+            case 'sendMessage':
+                if (commandArray.length > 1) {
+                    if (!useDevChannels && data.channels.some(element => commandArray[1].includes(element))) {
+                        // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
+                        const channelID = data.channels[data.channels.indexOf(commandArray[1]) + 1];
+                        const channelSender = client.channels.cache.find(channelToFind => channelToFind.id === channelID);
+                        // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
+                        commandArray.splice(0, 2);
+                        // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
+                        const joinedArr = commandArray.join(' ');
+                        // Check to see if the joined array is empty (only whitespace)
+                        if (!joinedArr.replace(/\s/g, '').length) {
+                            log(error('NonFatalError: '), warn('Cannot send messages that only have whitespace'));
+                            break;
+                        }
+                        channelSender.send(joinedArr);
+                    } else if (useDevChannels && data.channelsDev.some(element => commandArray[1].includes(element))) {
+                        // Find the channel IDs and then take care of data formatting. Remove the first 2 entries of the command array with splice()
+                        const channelID = data.channelsDev[data.channelsDev.indexOf(commandArray[1]) + 1];
+                        log(channelID);
+                        const channelSender = client.channels.cache.find(channelToFind => channelToFind.id === channelID);
+                        // ['sendMessage', 'General', 'FOO', 'BAR'] -> ['FOO', 'BAR']
+                        commandArray.splice(0, 2);
+                        // Join any remaining entries in the array and separate them with spaces. ['FOO', 'BAR'] -> 'FOO BAR'
+                        const joinedArr = commandArray.join(' ');
+                        log(joinedArr);
+                        // Check to see if the joined array is empty (only whitespace)
+                        if (!joinedArr.replace(/\s/g, '').length) {
+                            log(error('NonFatalError: '), warn('Cannot send messages that only have whitespace'));
+                            break;
+                        }
+                        channelSender.send(joinedArr);
+                    } else {
+                        log(error('NonFatalError: '), warn('Missing channel, you can do the channelList command to get a list of channels'));
+                    }
+                }
+                break;
+            case 'channelList':
+                /*
+                    We're checking if the index is even or odd because the file structure goes:
+                    CHANNEL
+                    ID
+                    CHANNEL
+                    ID
+                    ...
+                */
+                if (useDevChannels) {
+                    for (let i = 0; i < data.channelsDev.length; i++) {
+                        if (i % 2 === 0) {
+                            log(info(chalk.bold(data.channelsDev[i])), ' ');
+                        }
+                    }
+                    break;
+                } else {
+                    for (let i = 0; i < data.channels.length; i++) {
+                        if (i % 2 === 0) {
+                            log(info(data.channels[i]), ' ');
+                        }
+                    }
+                    break;
+                }
+
+            case 'dataBackup':
+                // TODO: Allow you to specify a filename and warn if you're overwriting a file.
+                fs.copyFile('./json/data.json', './json/backups/dataBACKUP.json', err => {
+                    if (err) {
+                        log(error('ERROR COPYING FILE\n', err));
+                    } else {
+                        log(success('Success!'));
+                    }
+                });
                 break;
         }
+    readline.close;
+    userInput();
     });
-    // This is here so this function runs endlessly
 }
 
 // This once the client is ready (not a loop)
@@ -310,6 +405,27 @@ client.on(Events.MessageCreate, async message => {
 
         case 'sysinfo':
             message.channel.send(codeBlock(`CPU ARCHITECTURE: ${os.arch()}\nTOTAL MEMORY: ${os.totalmem / 1e+9}GB\nFREE MEMORY: ${os.freemem / 1e+9}GB\nMACHINE TYPE: ${os.machine}\nOPERATING SYSTEM: ${os.type()}\nUPTIME (IN MINUTES): ${Math.trunc(os.uptime / 60)}`));
+            break;
+
+        case 'settings':
+            if (message.member.permissionsIn(message.channel).has('Administrator')) {
+                if (parsedArgs.length === 2) {
+                    settings(parsedArgs[0], parsedArgs[1]);
+                } else {
+                    if (parsedArgs[0] === 'list') {
+                        jsonReader('./json/data.json', (err, JSONData) => {
+                            if (err) {
+                                log('ERROR READING FILE', err);
+                            }
+                            message.channel.send(codeBlock(JSON.stringify(JSONData.settings).replace(/{*"*}*/g, '').replace(/,/g, '\n').replace(/:/g, ': ').replace(/false/g, 'disabled').replace(/true/g, 'enabled')));
+                        });
+                        break;
+                    }
+                    message.reply('Please put in a setting name and a state');
+                }
+            } else {
+                message.reply('You do not have permission to use thsi command');
+            }
             break;
 
         case 'bulkdel':
@@ -421,39 +537,53 @@ client.on(Events.MessageCreate, async message => {
                     break;
 
                 case 'cat':
-                    const randomCat = await request('https://aws.random.cat/meow');
-                    const rJS = await randomCat.body.json();
-                    const randomCatEmbed = new EmbedBuilder()
-                        .setColor([117, 65, 240])
-                        .setTitle('A random cat!')
-                        .setDescription('meow!')
-                        .setImage(rJS.file)
-                        .setTimestamp()
-                        .setFooter({ text: `Prompted by ${message.author.username}` });
-                    message.channel.send({ embeds: [randomCatEmbed] });
-                    log(rJS.file);
-                    userInput();
+                    try {
+                        const randomCat = await request('https://aws.random.cat/meow');
+                        const rJS = await randomCat.body.json();
+                        const randomCatEmbed = new EmbedBuilder()
+                            .setColor([117, 65, 240])
+                            .setTitle('A random cat!')
+                            .setDescription('meow!')
+                            .setImage(rJS.file)
+                            .setTimestamp()
+                            .setFooter({ text: `Prompted by ${message.author.username}` });
+                        message.channel.send({ embeds: [randomCatEmbed] });
+                        log(rJS.file);
+                    } catch (err) {
+                        log(error(err));
+                        message.channel.send('This api has encountered an error, possibly a timeout. If this persists contact the bot owner if available');
+                    }
                     break;
 
                 case 'dog':
-                    const randomDogRequest = await request('https://dog.ceo/api/breeds/image/random');
-                    const randomDog = await randomDogRequest.body.json();
-                    const randomDogEmbed = new EmbedBuilder()
-                        .setColor([117, 65, 240])
-                        .setTitle('A random dog!')
-                        .setDescription('woof!')
-                        .setImage(randomDog.message)
-                        .setTimestamp()
-                        .setFooter({ text: `Prompted by ${message.author.username}` });
-                    message.channel.send({ embeds: [randomDogEmbed] });
+                    try {
+                        const randomDogRequest = await request('https://dog.ceo/api/breeds/image/random');
+                        const randomDog = await randomDogRequest.body.json();
+                        const randomDogEmbed = new EmbedBuilder()
+                            .setColor([117, 65, 240])
+                            .setTitle('A random dog!')
+                            .setDescription('woof!')
+                            .setImage(randomDog.message)
+                            .setTimestamp()
+                            .setFooter({ text: `Prompted by ${message.author.username}` });
+                        message.channel.send({ embeds: [randomDogEmbed] });
+                    } catch (err) {
+                        log(error(err));
+                        message.channel.send('This api has encountered an error, possibly a timeout. If this persists contact the bot owner if available');
+                    }
                     break;
 
                 // Add lorem picsum later
 
                 case 'joke':
-                    const randomjokeRequest = await request('https://api.api-ninjas.com/v1/dadjokes?limit=1', { headers: { 'X-Api-Key': data.config.apiNinjasKey } });
-                    const randomJoke = await randomjokeRequest.body.json();
-                    message.reply(randomJoke[0].joke);
+                    try {
+                        const randomjokeRequest = await request('https://api.api-ninjas.com/v1/dadjokes?limit=1', { headers: { 'X-Api-Key': data.config.apiNinjasKey } });
+                        const randomJoke = await randomjokeRequest.body.json();
+                        message.reply(randomJoke[0].joke);
+                    } catch (err) {
+                        log(error(err));
+                        message.channel.send('This api has encountered an error, possibly a timeout. If this persists contact the bot owner if available');
+                    }
                     break;
 
                 case 'video':
