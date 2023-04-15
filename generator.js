@@ -238,10 +238,10 @@ if (!isNSFW) {
 }
 
 // Generate the file structure
-fs.mkdirSync('./tmp/json/backups', { recursive: true });
+fs.mkdirSync('./json/backups', { recursive: true });
 
 // Write json
-fs.writeFileSync('./tmp/json/data.json', JSON.stringify(json, null, 2), (err) => {
+fs.writeFileSync('./json/data.json', JSON.stringify(json, null, 2), (err) => {
     if (err) {
         console.error(err);
     } else {
