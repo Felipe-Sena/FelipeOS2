@@ -322,7 +322,7 @@ client.once(Events.ClientReady, c => {
     log(success(`Login successfull, ${useDevAccount ? `you are using a developer account: ${c.user.tag}` : `you are using a normal account ${c.user.tag}`}`));
     c.user.setActivity('The Swomp', { type: ActivityType.Watching });
     if (!testing) {
-        const channelToSend = client.channels.cache.find(Channel => Channel.id === data.channels[0]);
+        const channelToSend = client.channels.cache.find(Channel => Channel.id === data.config.generalChannelID);
         if (channelToSend && sendGif) {
             channelToSend.send('https://tenor.com/view/3kilksphillip-hello-run-csgo-gif-20739439');
         } if (!channelToSend) {
