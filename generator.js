@@ -7,7 +7,6 @@
 const fs = require('fs');
 
 
-let isNSFW = false;
 let json;
 
 
@@ -172,70 +171,16 @@ json = {
           '?',
           '.',
           ';'
+        ],
+        'triggerResponses': [
+          'GET CREATIVE AND FILL THIS UP!'
+        ],
+        'triggerWords': [
+          'GET CREATIVE AND FILL THIS UP!'
         ]
       },
 }
 
-if (!isNSFW) {
-    Object.assign(json, {
-        triggerResponses: [
-            'GET CREATIVE AND FILL THIS UP!'
-          ],
-        triggerWords: [
-            'GET CREATIVE AND FILL THIS UP!'
-          ]
-    });
-} else {
-    Object.assign(json, {
-        triggerResponses: [
-            'Jesus stop being horny',
-            'Listen, go offline for a while and come back later',
-            'Go to pornhub already',
-            'https://tenor.com/view/shut-up-bro-youre-weird-gif-25766261',
-            'DMs exist for a reason',
-            '||At least spoil it||',
-            'Yeah there\'s no way you\'ll beat NNN',
-            'Whore',
-            'https://tenor.com/view/mean-cat-cat-fu-gif-23644413',
-            '...',
-            'Go outside',
-            'Keep it to yourself',
-            'Keep it in your pants',
-            'https://tenor.com/view/3kliksphilip-2kliksphilip-1kliksphilip-kliksphilip-cs-go-gif-26740349',
-            'Ew',
-            'What the fuck?',
-            'https://tenor.com/view/ky-and-s-gif-23537424',
-            'https://media.discordapp.net/attachments/827170103702716510/868220496603381780/image0.gif',
-            'Virgin',
-            'Loser',
-            'https://tenor.com/view/erm-erm-what-the-scallop-xqc-gif-26935095',
-            'Get a life',
-            'Jerking it all the time won\'t make it bigger',
-            'We get it, you\'re lonely',
-            'Let me guess - no one likes you',
-            'https://tenor.com/view/youre-weird-gif-25718511',
-            'https://tenor.com/view/shut-up-bro-youre-weird-gif-25766261'
-          ],
-        triggerWords: [
-            'mommy',
-            'mommy milkers',
-            'milkers',
-            'gag me',
-            '~',
-            'woof',
-            'awooga',
-            'moan',
-            'moaned',
-            'daddy',
-            'cum on me',
-            'cbt',
-            'cock and ball torture',
-            'uwu',
-            'owo',
-            'fuck me'
-          ]
-    });
-}
 
 // Generate the file structure
 fs.mkdirSync('./json/backups', { recursive: true });
@@ -259,7 +204,7 @@ json = {
     'channelID': 'COUNTCHANNEL'
 }
 
-fs.writeFileSync('./tmp/json/count.json', JSON.stringify(json, null, 2), (err) => {
+fs.writeFileSync('./json/count.json', JSON.stringify(json, null, 2), (err) => {
     if (err) {
         console.error(err);
     } else {

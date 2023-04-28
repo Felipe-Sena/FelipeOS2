@@ -20,7 +20,6 @@ const randomEntertainment = data.settings.randomentertainment;
 const randomResponses = data.settings.susrandomresponse;
 // let targeting = data.settings.targeting; might deprecate
 let args;
-let restartTimeout;
 let testing = false;
 // let countingTest = false;
 let verbose = false;
@@ -171,7 +170,6 @@ function reconnect() {
         log(success('Successfully logged in! (Developer Account)'));
         client.login(data.config.testingToken);
     }
-    clearTimeout(restartTimeout);
 }
 
 // Launch arguments
@@ -318,7 +316,7 @@ function userInput() {
 
 // This once the client is ready (not a loop)
 client.once(Events.ClientReady, c => {
-    restartTimeout = setInterval(reconnect, 14400000); // 4 hours
+    setInterval(reconnect, 14400000); // 4 hours is 14400000 ms
     log(success(`Login successfull, ${useDevAccount ? `you are using a developer account: ${c.user.tag}` : `you are using a normal account ${c.user.tag}`}`));
     c.user.setActivity('The Swomp', { type: ActivityType.Watching });
     if (!testing) {
@@ -331,6 +329,7 @@ client.once(Events.ClientReady, c => {
     }
     userInput();
 });
+
 
 // Runs on every message sent
 client.on(Events.MessageCreate, async message => {

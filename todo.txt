@@ -1,9 +1,0 @@
-TODO:
-Trivia //TBD
-Message logging for moderation -- FINISHED
-Settings --FINISHED
-FBOT like actions -- INDEV
-Voice channel functions like music
-Minigames
-Rework pp command
-Auto time-out people who break a set of rules
