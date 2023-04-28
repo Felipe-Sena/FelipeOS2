@@ -13,6 +13,7 @@
 // Variable definitions
 const data = require('./json/data.json');
 const count = require('./json/count.json');
+let linkArray = new Array(0);
 let counting = data.settings.count;
 let logging = data.settings.logging;
 const randomEntertainment = data.settings.randomentertainment;
@@ -20,7 +21,6 @@ const randomEntertainment = data.settings.randomentertainment;
 const randomResponses = data.settings.susrandomresponse;
 // let targeting = data.settings.targeting; might deprecate
 let args;
-let restartTimeout;
 let testing = false;
 // let countingTest = false;
 let verbose = false;
@@ -31,6 +31,7 @@ let sendGif = true;
 // Requires
 
 const prefix = '-';
+const ytdl = require('ytdl-core');
 const fs = require('fs');
 const os = require('os');
 const chalk = require('chalk');
@@ -43,6 +44,7 @@ const log = console.log;
 const readline = require('readline').createInterface({ input: process.stdin, output: process.stdout });
 const { argv } = require('node:process');
 const { Client, Events, GatewayIntentBits, PermissionsBitField, ActivityType, codeBlock, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, entersState, VoiceConnectionStatus, getVoiceConnection, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
 const { request } = require('undici');
 
 // Functions
@@ -74,7 +76,7 @@ function jsonReader(filePath, cb) {
     });
 }
 
-// File append is used in logging
+// File append is used for logging messages
 function fileAppend(name, text, encoding, cb) {
     fs.appendFile(name, `\n${text}`, encoding, err => {
         if (err) {
@@ -92,7 +94,6 @@ function countFunction(message, userID, randomNumber) {
             log(error('Error'));
         }
         if (userID !== countJSON.previousUserID && messageToNumber === countJSON.nextNumber) {
-            log('win');
             countJSON.currentNumber = messageToNumber;
             countJSON.nextNumber = countJSON.currentNumber + 1;
             countJSON.previousUserID = userID;
@@ -104,7 +105,6 @@ function countFunction(message, userID, randomNumber) {
             });
             message.react('✅');
         } else {
-            log('lose');
             countJSON.currentNumber = 0;
             countJSON.nextNumber = 1;
             countJSON.previousUserID = userID;
@@ -160,26 +160,59 @@ function settings(name, value) {
     });
 }
 
-// Possible fix for bot randomly disconnecting
+// Fixes the bot losing connection, should run once every 4 hours.
+// If this doesn't fix the connection issues I am going to go insane...
 function reconnect() {
     log(warn('RECONNECTING...'));
     client.destroy();
     if (!useDevAccount) {
-        log(success('Successfully logged in! (Regular Account)'));
         client.login(data.config.token);
+        log(success('Successfully logged in! (Regular Account)'));
     } else {
-        log(success('Successfully logged in! (Developer Account)'));
         client.login(data.config.testingToken);
+        log(success('Successfully logged in! (Developer Account)'));
     }
-    clearTimeout(restartTimeout);
 }
 
+// Lazy copy from an old implementation I coded at https://github.com/Felipe-Sena/engineer/blob/main/index.js
+// Should be revised
+async function joinVoice(channel) {
+    const connection = joinVoiceChannel({
+        channelId: channel.id,
+        guildId: channel.guild.id,
+        adapterCreator: channel.guild.voiceAdapterCreator,
+        selfDeaf: false,
+        selfMute: false,
+    });
+
+    try {
+        await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
+        return connection;
+    } catch (err) {
+        connection.destroy();
+        throw error;
+    }
+}
+
+function audioHandler(link, message) {
+    // the link parameter is an array
+    const connection = getVoiceConnection(message.guild.id);
+    const player = createAudioPlayer();
+    const stream = ytdl(link[0], {
+        filter: 'audioonly',
+    });
+    const resource = createAudioResource(stream, {
+        inputType: StreamType.Arbitrary,
+    });
+    player.play(resource);
+    connection.subscribe(player);
+}
 // Launch arguments
 
 argv.forEach((val) => {
     args = [val];
     if (args.includes('-h' || '-help')) {
-        log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -verbose -usedevchannels -nolog -testingAccount -nogif')));
+        log(chalk.blueBright(chalk.bold('-h -help -testing -nocount -verbose -usedevchannels -nolog -testingaccount -nogif')));
         process.exit();
     }
     if (args.includes('-testing')) {
@@ -197,7 +230,7 @@ argv.forEach((val) => {
     if (args.includes('-nolog')) {
         logging = false;
     }
-    if (args.includes('-testingAccount')) {
+    if (args.includes('-testingaccount')) {
         useDevAccount = true;
     }
     if (args.includes('-nogif')) {
@@ -215,6 +248,7 @@ const client = new Client({ intents: [
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildVoiceStates,
 ] });
 // The function userInput is down here because it requires the Discord.JS client in order to work properly
 
@@ -237,6 +271,9 @@ function userInput() {
                     counting = true;
                     log(success('Counting is now enabled'));
                 }
+                break;
+            case 'coutStatus':
+                log(`Counting is set to ${counting}`);
                 break;
             case 'sendMessage':
                 if (commandArray.length > 1) {
@@ -318,7 +355,7 @@ function userInput() {
 
 // This once the client is ready (not a loop)
 client.once(Events.ClientReady, c => {
-    restartTimeout = setInterval(reconnect, 14400000); // 4 hours
+    setInterval(reconnect, 14400000); // 4 hours is 14400000 ms
     log(success(`Login successfull, ${useDevAccount ? `you are using a developer account: ${c.user.tag}` : `you are using a normal account ${c.user.tag}`}`));
     c.user.setActivity('The Swomp', { type: ActivityType.Watching });
     if (!testing) {
@@ -339,6 +376,8 @@ client.on(Events.MessageCreate, async message => {
     const randomNumber = Math.random();
     logVerbose(null, randomNumber);
     const date = new Date(message.createdTimestamp);
+    // Should this be here?
+    const connection = getVoiceConnection(message.guild.id);
 
     // Handles logging, if the channel is not the questioning channel then we'll log normally with the option to disable the logging (only disables normal logs)
     logMessages(message);
@@ -521,6 +560,32 @@ client.on(Events.MessageCreate, async message => {
             } catch (err) {
                 log(error(err));
             }
+            break;
+
+        // Voice
+
+        case 'join':
+            if (message.member.voice.channel) {
+                joinVoice(message.member.voice.channel);
+            } else {
+                message.reply('You are not in a voice channel! Please join a voice channel before calling the bot.');
+            }
+            break;
+
+        case 'leave':
+            if (connection) {
+                connection.destroy();
+                message.reply('Bye bye!');
+            }
+            break;
+
+        // case 'stop':
+
+        case 'play':
+            // Main parser converts everything to lowercase, so it breaks the link...
+            const naturalMessage = message.content.slice(prefix.length).split(/ +/);
+            linkArray.push(naturalMessage[1]);
+            audioHandler(linkArray, message);
             break;
 
         // Fun stuff
