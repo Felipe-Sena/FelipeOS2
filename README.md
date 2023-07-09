@@ -1,4 +1,4 @@
-# FELIPEOS² - INTRODUCTION
+![logo](/READMEsrc/logo.png)
 
 FELIPEOS² is a versatile Discord bot licensed under the GPL 3.0 license.  
 Hopefully this document will help you in setting the bot up, ideally there will be a "generic" version that will have easier set-up instructions. But before I show you how to make this work I'd like to credit the libraries used:
