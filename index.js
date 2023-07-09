@@ -21,6 +21,7 @@ const randomEntertainment = data.settings.randomentertainment;
 const randomResponses = data.settings.susrandomresponse;
 // let targeting = data.settings.targeting; might deprecate
 let args;
+let playing = false;
 let testing = false;
 // let countingTest = false;
 let verbose = false;
@@ -194,18 +195,53 @@ async function joinVoice(channel) {
     }
 }
 
-function audioHandler(link, message) {
+
+/*
+    The first song is always going to be played whenever the function starts,
+    then we'll set a boolean to indicate that we're playing a song and we should
+    not call the function (very important), just push the song link to the queue.
+    Whenever the audioPlayerStatus is "Idle" we'll shift the array and then play it.
+    (Also do a bound check with the array to see if it isn't null!!)
+*/
+function audioHandler(message) {
     // the link parameter is an array
-    const connection = getVoiceConnection(message.guild.id);
-    const player = createAudioPlayer();
-    const stream = ytdl(link[0], {
-        filter: 'audioonly',
-    });
-    const resource = createAudioResource(stream, {
-        inputType: StreamType.Arbitrary,
-    });
-    player.play(resource);
-    connection.subscribe(player);
+    // First check if we have a valid array
+    linkArray = linkArray.filter(element => element !== undefined);
+    if (linkArray.length > 0) {
+        logVerbose(null, linkArray);
+        playing = true;
+        const connection = getVoiceConnection(message.guild.id);
+        const player = createAudioPlayer();
+        let stream = ytdl(linkArray[0], {
+            filter: 'audioonly',
+        });
+        let resource = createAudioResource(stream, {
+            inputType: StreamType.Arbitrary,
+        });
+        player.play(resource);
+        connection.subscribe(player);
+        player.on(AudioPlayerStatus.Idle, () => {
+            // Do the filtering again
+            linkArray = linkArray.filter(element => element !== undefined);
+            logVerbose(null, 'The player is idling');
+            logVerbose(null, linkArray);
+            log(linkArray.length);
+            if (linkArray.length > 0) {
+                linkArray.shift();
+                log('here!');
+                stream = ytdl(linkArray[0], {
+                    filter: 'audioonly',
+                });
+                resource = createAudioResource(stream, {
+                    inputType: StreamType.Arbitrary,
+                });
+                player.play(resource);
+                connection.subscribe(player);
+            } else {
+                playing = false;
+            }
+        });
+    }
 }
 // Launch arguments
 
@@ -582,10 +618,21 @@ client.on(Events.MessageCreate, async message => {
         // case 'stop':
 
         case 'play':
-            // Main parser converts everything to lowercase, so it breaks the link...
-            const naturalMessage = message.content.slice(prefix.length).split(/ +/);
-            linkArray.push(naturalMessage[1]);
-            audioHandler(linkArray, message);
+            if (connection) {
+                // Main parser converts everything to lowercase, so it breaks the link...
+                const naturalMessage = message.content.slice(prefix.length).split(/ +/);
+                if (ytdl.validateURL(naturalMessage[1])) {
+                    linkArray.push(naturalMessage[1]);
+                    logVerbose(null, linkArray);
+                    if (!playing) {
+                        audioHandler(message);
+                    }
+                } else {
+                    message.reply('Please send a valid YouTube link.');
+                }
+            } else {
+                message.reply('I am not in a voice channel! Please use the -join command while in a voice channel.');
+            }
             break;
 
         // Fun stuff
@@ -603,17 +650,16 @@ client.on(Events.MessageCreate, async message => {
 
                 case 'cat':
                     try {
-                        const randomCat = await request('https://aws.random.cat/meow');
+                        const randomCat = await request('https://cataas.com/cat?json=true');
                         const rJS = await randomCat.body.json();
                         const randomCatEmbed = new EmbedBuilder()
                             .setColor([117, 65, 240])
                             .setTitle('A random cat!')
                             .setDescription('meow!')
-                            .setImage(rJS.file)
+                            .setImage('https://cataas.com/' + rJS.url)
                             .setTimestamp()
                             .setFooter({ text: `Prompted by ${message.author.username}` });
                         message.channel.send({ embeds: [randomCatEmbed] });
-                        log(rJS.file);
                     } catch (err) {
                         log(error(err));
                         message.channel.send('This api has encountered an error, possibly a timeout. If this persists contact the bot owner if available');
@@ -638,7 +684,28 @@ client.on(Events.MessageCreate, async message => {
                     }
                     break;
 
-                // Add lorem picsum later
+                case 'imagen':
+                    let resolution = 200;
+
+                    if (parsedArgs[1] && parseInt(parsedArgs[1]) !== null) {
+                        resolution = parseInt(parsedArgs[1]);
+                    }
+
+                    try {
+                        const randomImageEmbed = new EmbedBuilder()
+                            .setColor([117, 65, 240])
+                            .setTitle('A random image!')
+                            .setDescription('What a shot!')
+                            .setImage(`https://picsum.photos/seed/${randomNumber}/${resolution}`)
+                            .setTimestamp()
+                            .setFooter({ text: `Prompted by ${message.author.username}` });
+                        message.channel.send({ embeds: [randomImageEmbed] });
+                    } catch (err) {
+                        log(error(err));
+                        message.channel.send('This api has encountered an error, possibly a timeout. If this persists contact the bot owner if available');
+                    }
+                    break;
+
 
                 case 'joke':
                     try {
