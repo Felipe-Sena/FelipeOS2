@@ -330,6 +330,20 @@ client.once(Events.ClientReady, c => {
     userInput();
 });
 
+client.on('guildMemberAdd', member => {
+    // Set member role
+    member.roles.add([data.config.townspersonRole, data.config.countRole]);
+
+    // Send a message with an embed to the announcements channel
+    const joinEmbed = new EmbedBuilder()
+        .setColor([117, 65, 240])
+        .setTitle(`${member.displayName} has joined The Swomp!`)
+        .setDescription(`Be sure to read the rules  at <#${data.config.rulesChannel}>, <@${member.id}>`)
+        .setThumbnail(member.avatar)
+        .setTimestamp();
+
+    client.channels.cache.get(data.config.announcementsChannel).send({ embeds: [joinEmbed] });
+});
 
 // Runs on every message sent
 client.on(Events.MessageCreate, async message => {
