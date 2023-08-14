@@ -48,13 +48,6 @@ json = {
         'toggleCount': 'Toggles the count',
         'countStatus': 'Displays if the count is enabled or disabled'
       },
-      'info': {
-        'credits': 'Felipe Sena Costa: Coding\nSp00ketti: Additional help\nThe Swomp Server: Material for random videos and gifs\nOther people have also helped in the development of this bot, credit retroactively applies to the people who aided in the development of the original FelipeOS bot, but won\'t be named here for privacy reasons\nProudly uses Discord.js!',
-        'commands': '-settings {setting} {true/false} = ADMIN ONLY! Allows the user to change bot settings\n-versionnumber = Returns the current version\n-credits = Shows credits and attributions\n-latestupdate = Shows patch notes\n-random {prompt} = Sends a message with the desired random content, it can be: cat, video, song and gif\n-bulkdel {int} = ADMIN ONLY! Deletes a set number of messages\n-rolecreate {name} {admin/normal} = ADMIN ONLY! Creates a new role\n-roledelete {name} = ADMIN ONLY! Deletes an existing role\n-ppsize = Dick size command (real)',
-        'update': 'Major bot rewrite, focusing on code simplicity and readability, new features and performance; Major bug fix regarding disconnects.',
-        'gitRepo': 'https://github.com/Felipe-Sena/FelipeOS2',
-        'version': 'RELEASE|1.5.0'
-      },
       'settings': {
         'logging': true,
         'susrandomresponse': true,
