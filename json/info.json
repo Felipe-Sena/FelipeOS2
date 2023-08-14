@@ -1,7 +1,7 @@
 {
     "credits": "Felipe Sena Costa: Coding\nSp00ketti: Additional help\nThe Swomp Server: Material for random videos and gifs\nOther people have also helped in the development of this bot, credit retroactively applies to the people who aided in the development of the original FelipeOS bot, but won't be named here for privacy reasons\nProudly uses Discord.js!",
     "commands": "-help = Sends this message\n-botinfo = Sends info about the bot, like git repo, version, credits, etc.\n-settings {setting} {true/false} = ADMIN ONLY! Allows the user to change bot settings\n-bulkdel {number} = ADMIN ONLY! Deletes a set number of messages-rolecreate {name} {admin/normal} = ADMIN ONLY! Creates a new role\n-roledelete {name} = ADMIN ONLY! Deletes an existing role\n-join = Makes the bot join the current voice channel\n-leave = Makes the bot leave any voice channel\n-play {YouTubeLink} = Makes the bot play audio from a YouTube video. If ran while playing audio it gets sent to a queue\n-random {prompt} = Sends a message with the desired random content, supported types are: cat, dog, picture {optional: resolution (square)}, joke, video, image, gif and song\n-ppsize = Acurrately sends the penile lenght of the person who invoked the command",
-    "update": "Removed debug messages for the CLI when count is running, added one CLI command and protentially fixed a connection issue.",
+    "update": "Reimplemented assignment of roles on user join. Bot now sends an embed whenever someone joins the server.",
     "gitRepo": "https://github.com/Felipe-Sena/FelipeOS2",
     "version": "RELEASE|1.6.1"
 }
