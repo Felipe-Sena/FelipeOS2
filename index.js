@@ -11,6 +11,7 @@
 */
 'use strict';
 // Variable definitions
+const infoFile = require('./json/info.json');
 const data = require('./json/data.json');
 const count = require('./json/count.json');
 let counting = data.settings.count;
@@ -387,7 +388,7 @@ client.on(Events.MessageCreate, async message => {
                 .setColor([117, 65, 240])
                 .setTitle('Help')
                 .addFields(
-                    { name: 'List', value: `${codeBlock(data.info.commands)}` },
+                    { name: 'List', value: `${codeBlock(infoFile.commands)}` },
                 )
                 .setTimestamp()
                 .setFooter({ text: `Prompted by ${message.author.username}` });
@@ -399,17 +400,17 @@ client.on(Events.MessageCreate, async message => {
 			.addComponents(
 				new ButtonBuilder()
 					.setLabel('GitHub')
-                    .setURL(data.info.gitRepo)
+                    .setURL(infoFile.gitRepo)
 					.setStyle(ButtonStyle.Link),
 			);
             const infoEmbed = new EmbedBuilder()
                 .setColor([117, 65, 240])
                 .setTitle('Info')
                 .addFields(
-                    { name: 'Credits:', value: data.info.credits },
-                    { name: 'Latest patch note:', value: data.info.update },
-                    { name: 'Current version: ', value: data.info.version },
-                    { name: 'GitHub repository: ', value: data.info.gitRepo }, // Should I keep this? We have a button...
+                    { name: 'Credits:', value: infoFile.credits },
+                    { name: 'Latest patch note:', value: infoFile.update },
+                    { name: 'Current version: ', value: infoFile.version },
+                    { name: 'GitHub repository: ', value: infoFile.gitRepo }, // Should I keep this? We have a button...
                     { name: 'License: ', value: 'GNU GENERAL PUBLIC LICENSE VERSION 3' },
                 )
                 .setFooter({ text: `Prompted by ${message.author.username}` });
