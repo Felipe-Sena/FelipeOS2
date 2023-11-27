@@ -47,13 +47,12 @@ ENTRY POINT & SSTARTUP
     const token = await core.token_manager('start /b ./key_manager/FScramble.exe decrypt ./key_manager/output/crypt ./key_manager/output/keys')
         .then().catch((error) => console.log(error));
 
-    client.login(token);
+    client.once(Events.ClientReady, client_user => {
+        console.log(`Startup finished. Logged in as ${client_user.user.tag}`);
+    });
 
+    client.login(token);
 })();
 
-
-client.once(Events.ClientReady, client_user => {
-    console.log(`Startup finished. Logged in as ${client_user.user.tag}`);
-});
 
 module.exports = { client };
