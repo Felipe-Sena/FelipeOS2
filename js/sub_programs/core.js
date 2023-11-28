@@ -1,5 +1,6 @@
 const fs = require('fs');
 const exec = require('child_process').exec;
+const chalk = require('chalk');
 
 const readline = require('readline').createInterface({
     input: process.stdin,
@@ -12,12 +13,14 @@ module.exports = {
     },
 
     token_manager: (command) => {
-        // For this to work you need to run FScramble in decrypt mode, maybe add a check?
         return new Promise((resolve, reject) => {
-
+            // Check if we're running FScramble.exe in decrypt mode.
             if (!command.includes('decrypt')) {
                 reject('FScramble needs to be run in "decrypt" mode.');
             }
+
+            console.log('Initializing token decryption...');
+            const start = Date.now();
 
             const process = exec(command);
             let result = '';
@@ -27,6 +30,8 @@ module.exports = {
             });
 
             process.on('close', () => {
+                const end = Date.now();
+                console.log(`Elapsed time during decryption: ${chalk.blue(end - start)} ms`);
                 resolve(result);
             });
         });
@@ -45,7 +50,7 @@ module.exports = {
     JSON_write: (path, data) => {
         fs.writeFile(path, JSON.stringify(data, null, 1), (err) => {
             if (err) {
-                return 1;
+                return err;
             } else {
                 return 0;
             }
