@@ -13,6 +13,7 @@ if %choice% == 1 (
         goto start
     )
 )
+
 :global
 cd ./../js/sub_programs
 node ./deploy_commands_global.js
