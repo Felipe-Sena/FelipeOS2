@@ -24,6 +24,7 @@ const chalk = require('chalk');
 const core = require('./js/sub_programs/core');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 
+
 /*
 ----------------------------
 CHALK SETUP
@@ -68,6 +69,7 @@ ENTRY POINT
         console.log(good(`Startup finished. Logged in as ${client_user.user.tag}`));
     });
 
+    core.read_console();
 
     /*
     ----------------------------
@@ -140,8 +142,20 @@ ENTRY POINT
         console.log(message_event.content);
     });
 
+    /*
+    ----------------------------
+    Handle console commands
+    ----------------------------
+    */
+
+    core.console_output_event.on('output', (output) => {
+        switch (output) {
+            case 'quit': process.exit(0);
+        }
+    });
+
     client.login(token);
 })();
 
-
+// Maybe use?
 module.exports = { client };
