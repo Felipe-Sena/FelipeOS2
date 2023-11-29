@@ -1,15 +1,34 @@
 const fs = require('fs');
 const exec = require('child_process').exec;
 const chalk = require('chalk');
+const event_emitter = require('events').EventEmitter;
+const read_line = require('readline');
 
-const readline = require('readline').createInterface({
+const rl = read_line.createInterface({
     input: process.stdin,
     output: process.stdout,
+    prompt: '> ',
 });
 
+const console_output_event = new event_emitter();
+
 module.exports = {
+    console_output_event,
+
     read_console: () => {
-        return new Promise((resolve) => readline.question('> ', resolve));
+        rl.prompt();
+            rl.on('line', (line) => {
+                // CORE COMMANDS
+                switch (line.trim()) {
+                    case 'refresh':
+                        this.read_console;
+                        break;
+                }
+                console_output_event.emit('output', line.trim());
+                rl.prompt();
+            }).on('close', () => {
+                process.exit(0);
+            });
     },
 
     token_manager: (command) => {
