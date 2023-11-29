@@ -1,5 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 
+// Show ping in ms
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('fos_ping')
