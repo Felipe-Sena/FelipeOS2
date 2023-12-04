@@ -1,3 +1,16 @@
 {
- "json": "1"
+    "main_states": {
+        "is_setup": false,
+        "use_unencrypted_key": false,
+        "is_count_setup": false,
+        "enable_count_at_startup": false,
+        "is_audio_player_setup": false,
+        "enable_audio_player_at_startup": false
+    },
+
+    "channel_ids": {
+        "general": "",
+        "count": "",
+        "admin_messages": ""
+    }
 }
