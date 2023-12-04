@@ -4,7 +4,11 @@
   "description": "MAIN",
   "main": "./index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "nodemonConfig": {
+    "delay": 2500
   },
   "author": "FSC",
   "license": "GNU GENERAL PUBLIC LICENSE",
